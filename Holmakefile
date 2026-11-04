@@ -1,0 +1,6 @@
+CLINE_OPTIONS = -r
+
+INCLUDES = hol
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all

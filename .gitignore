@@ -1,0 +1,6 @@
+.holbuild/
+.hol/
+*.aux
+*.log
+ott/traces.tex
+ott/traces.pdf

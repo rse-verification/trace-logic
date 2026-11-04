@@ -1,85 +1,152 @@
+% Rec language, trace logic and proof calculus from
+% D. Gurov and R. Hähnle, "An Expressive Trace Logic for Recursive Programs"
+% (arXiv:2411.13125). Exported to HOL4 with: ott -i traces.ott -o tracesScript.sml
+
 embed
-{{ coq-preamble
-From stdpp Require Import prelude strings gmap stringmap functions countable.
+{{ hol
+open integerTheory stringTheory pred_setTheory listTheory alistTheory combinTheory;
 }}
 
 metavar n ::=
-  {{ lex num }}
+  {{ lex numeral }}
   {{ com integer constant }}
-  {{ coq Z }}
+  {{ hol int }}
 metavar x ::=
   {{ lex alphanum }}
   {{ com program variable name }}
-  {{ coq string }}
+  {{ hol string }}
 metavar X ::=
   {{ lex alphanum }}
   {{ com recursion variable name }}
-  {{ coq string }}
+  {{ hol string }}
 metavar Q ::=
   {{ lex alphanum }}
   {{ com relation name }}
-  {{ coq string }}
+  {{ hol string }}
 metavar m ::=
   {{ lex alphanum }}
   {{ com procedure name }}
-  {{ coq string }}
+  {{ hol string }}
 metavar Y ::=
   {{ lex alphanum }}
   {{ com statement variable name }}
-  {{ coq string }}
-indexvar k ::=
-  {{ lex num }}
-  {{ coq nat }}
+  {{ hol string }}
 
 grammar
 v :: v_ ::=
   {{ com boolean value }}
-  {{ coq bool }}
+  {{ hol bool }}
 | tt :: M :: tt
-  {{ coq true }}
+  {{ hol T }}
 | ff :: M :: ff
-  {{ coq false }}
+  {{ hol F }}
 
 a :: a_ ::=
+  {{ com arithmetic expressions }}
 | n :: :: num
 | x :: :: var
 | - a :: :: uminus
 | a1 + a2 :: :: plus
 | a1 - a2 :: :: minus
 | a1 * a2 :: :: times
+| ( a ) :: S :: paren
+  {{ hol [[a]] }}
 
 b :: b_ ::=
+  {{ com Boolean expressions }}
 | true :: :: true
 | false :: :: false
 | a1 = a2 :: :: eq
 | a1 <= a2 :: :: leq
 | ~ b :: :: neg
 | b1 /\ b2 :: :: and
+| ( b ) :: S :: paren
+  {{ hol [[b]] }}
 
 S :: S_ ::=
+  {{ com statements }}
 | skip :: :: skip
 | x := a :: :: assign
 | S1 ; S2 :: :: seq
 | if b then S1 else S2 :: :: ifelse
 | m ( ) :: :: call
 | Y :: :: var
-| S [ S1 / S'1 , ... , Sk / S'k ] :: M :: subst
-  {{ coq (S_subst [[S]] [[S1 / S'1 ... Sk / S'k]]) }}
-
-M :: M_ ::=
-| m { S } :: :: procedure
+  {{ com statement variable }}
+| ( S ) :: S :: paren
+  {{ hol [[S]] }}
+| S [ G ] :: M :: subst_calls
+  {{ com replace each call $m()$ with $\mathsf{skip};Y_m$ for $Y_m$ in the domain of $\Gamma$ }}
+  {{ hol (subst_calls (G_dom [[G]]) [[S]]) }}
+  {{ tex [[S]][\mathsf{skip};Y_{m'}/m'()]_{Y_{m'} \in \mathrm{dom}([[G]])} }}
 
 s :: s_ ::=
-  {{ coq (stringmap Z) }}
-  {{ coq-universe Type }}
-| s [ x |-> n ] :: M :: add
-  {{ coq (<[ [[x]]:=[[n]] ]>[[s]]) }}
+  {{ com program states }}
+  {{ hol (string -> int) }}
+| s [ x |-> n ] :: M :: update
+  {{ hol (([[x]] =+ [[n]]) [[s]]) }}
 
 c :: c_ ::=
-  {{ com configuration }}
-  {{ coq-universe Type }}
+  {{ com configurations }}
 | << S , s >> :: :: tuple
 | s :: :: state
+
+t :: t_ ::=
+  {{ com finite traces }}
+  {{ hol ((string -> int) list) }}
+| s :: M :: one
+  {{ hol [ [[s]] ] }}
+| s . t :: M :: cons
+  {{ hol ([[s]] :: [[t]]) }}
+  {{ tex [[s]] \cdot [[t]] }}
+
+p :: p_ ::=
+  {{ com state formulas }}
+| b :: :: b
+
+R :: R_ ::=
+  {{ com binary relation symbols }}
+| Id :: :: Id
+  {{ com identity relation }}
+| Sb [ a , x ] :: :: Sb
+  {{ com update relation }}
+  {{ tex \widehat{\mathsf{Sb} }^{[[a]]}_{[[x]]} }}
+| Q :: :: other
+  {{ com other relation }}
+
+f {{ tex \phi }} :: f_ ::=
+  {{ com trace formulas }}
+| p :: :: state
+| R :: :: rel
+| X :: :: recvar
+| f1 /\ f2 :: :: and
+| f1 \/ f2 :: :: or
+| f1 ^ f2 :: :: chop
+| mu X . f :: :: mu (+ bind X in f +)
+| ( f ) :: S :: paren
+  {{ hol [[f]] }}
+| f [ f' / X ] :: M :: subst
+  {{ hol (subst_f [[f']] [[X]] [[f]]) }}
+
+G {{ tex \Gamma }} :: G_ ::=
+  {{ com sets of statement variable judgments }}
+  {{ hol ((string # f) set) }}
+| empty :: M :: empty
+  {{ hol EMPTY }}
+  {{ tex \emptyset }}
+| G , Y : f :: M :: insert
+  {{ hol (([[Y]],[[f]]) INSERT [[G]]) }}
+
+Tab {{ tex T }} :: Tab_ ::=
+  {{ com procedure tables (lists of declarations, first match counts) }}
+  {{ hol ((string # S) list) }}
+| m { S } Tab :: M :: cons
+  {{ hol (([[m]],[[S]]) :: [[Tab]]) }}
+
+E :: E_ ::=
+  {{ com entailment oracles on trace formulas }}
+  {{ hol (f -> f -> bool) }}
+| E E' :: M :: dummy
+  {{ hol [[E]] }}
 
 terminals :: terminals_ ::=
 | ^ :: :: chop {{ tex \smallfrown }}
@@ -95,394 +162,211 @@ terminals :: terminals_ ::=
 | in :: :: in {{ tex \in }}
 | |- :: :: vdash {{ tex \vdash }}
 | |= :: :: models {{ tex \models }}
+| |> :: :: induces {{ tex \triangleright }}
 | notin :: :: notin {{ tex \notin }}
-| calls :: :: calls {{ tex \mathsf{calls} }}
+| subset :: :: subset {{ tex \subseteq }}
 | Id :: :: Id {{ tex \mathsf{Id} }}
 | Sb :: :: Sb {{ tex \mathsf{Sb} }}
 
 formula :: formula_ ::=
-{{ com formulas }}
+  {{ com formulas }}
 | judgement :: :: judgement
-| s ( x ) = n :: M :: s_lookup
-  {{ coq ([[s]] !! [[x]] = Some [[n]]) }}
-| A [ a ] ( s ) = n :: M :: a_eval_eq
-  {{ coq (a_eval [[a]] [[s]] = Some [[n]]) }}
-| B [ b ] ( s ) = v :: M :: b_eval_eq
-  {{ coq (b_eval [[b]] [[s]] = Some [[v]]) }}
-| M in T :: M :: M_in_T
-  {{ coq ([[M]] ∈ T) }}
-| f |= f' :: M :: f_holds
-  {{ coq (f_holds [[f]] [[f']]) }}
-| S : f notin G :: M :: Sf_notin_G
-  {{ coq (([[S]],[[f]]) ∉ [[G]]) }}
-| Ym = Ym' :: M :: calls_eq
-  {{ coq ([[Ym]] = [[Ym']]) }}
+| A [ a ] ( s ) = n :: M :: a_eval
+  {{ hol (a_eval [[a]] [[s]] = [[n]]) }}
+  {{ tex \mathcal{A}[\![ [[a]] ]\!]([[s]]) = [[n]] }}
+| B [ b ] ( s ) = v :: M :: b_eval
+  {{ hol (b_eval [[b]] [[s]] = [[v]]) }}
+  {{ tex \mathcal{B}[\![ [[b]] ]\!]([[s]]) = [[v]] }}
+| m { S } in Tab :: M :: proc_in_T
+  {{ com procedure $m$ is declared with body $S$ in the procedure table $T$ }}
+  {{ hol (ALOOKUP [[Tab]] [[m]] = SOME [[S]]) }}
+| f |= E f' :: M :: entails
+  {{ com entailment, as decided by the oracle $E$ }}
+  {{ hol ([[E]] [[f]] [[f']]) }}
+  {{ tex [[f]] \models [[f']] }}
+| Y : f in G :: M :: in_G
+  {{ hol (([[Y]],[[f]]) IN [[G]]) }}
+| Y notin dom ( G ) :: M :: notin_dom
+  {{ hol ([[Y]] NOTIN G_dom [[G]]) }}
+  {{ tex [[Y]] \notin \mathrm{dom}([[G]]) }}
+| Y in dom ( G ) :: M :: in_dom
+  {{ hol ([[Y]] IN G_dom [[G]]) }}
+  {{ tex [[Y]] \in \mathrm{dom}([[G]]) }}
+| dom ( G ) = dom ( G' ) :: M :: dom_eq
+  {{ hol (G_dom [[G]] = G_dom [[G']]) }}
+  {{ tex \mathrm{dom}([[G]]) = \mathrm{dom}([[G']]) }}
+| G subset G' :: M :: subset
+  {{ hol ([[G]] SUBSET [[G']]) }}
+| Y = m :: M :: Y_eq_m
+  {{ com $Y$ is the statement variable $Y_m$ associated with procedure $m$ }}
+  {{ hol ([[Y]] = [[m]]) }}
+| closed ( f ) :: M :: closed
+  {{ hol (fv_f [[f]] = []) }}
+  {{ tex [[f]]\ \mathrm{closed} }}
 
-Ym :: Ym ::=
-  {{ coq (list (Y*S)) }}
-| calls ( G , S ) :: M :: calls
-  {{ coq (calls [[G]] [[S]]) }}
-| Y1 , S1 ... Yk , Sk :: M :: list
-  {{ coq [[Y1 S1 ... Yk Sk]] }}
+substitutions
+  single f X :: subst
+
+freevars
+  f X :: fv
 
 embed
-{{ coq
+{{ hol
 
-Section System.
+Definition a_eval_def:
+  (a_eval (a_num n) s = n) /\
+  (a_eval (a_var x) s = s x) /\
+  (a_eval (a_uminus a) s = - a_eval a s) /\
+  (a_eval (a_plus a1 a2) s = a_eval a1 s + a_eval a2 s) /\
+  (a_eval (a_minus a1 a2) s = a_eval a1 s - a_eval a2 s) /\
+  (a_eval (a_times a1 a2) s = a_eval a1 s * a_eval a2 s)
+End
 
-Variable T : list M.
+Definition b_eval_def:
+  (b_eval b_true s = T) /\
+  (b_eval b_false s = F) /\
+  (b_eval (b_eq a1 a2) s = (a_eval a1 s = a_eval a2 s)) /\
+  (b_eval (b_leq a1 a2) s = (a_eval a1 s <= a_eval a2 s)) /\
+  (b_eval (b_neg b) s = ~b_eval b s) /\
+  (b_eval (b_and b1 b2) s = (b_eval b1 s /\ b_eval b2 s))
+End
 
-Variable b_eval : b -> s -> option v.
-Variable a_eval : a -> s -> option n.
+(* replace each call m() with skip;Y_m where Y_m = m is in ms *)
+Definition subst_calls_def:
+  (subst_calls ms S_skip = S_skip) /\
+  (subst_calls ms (S_assign x a) = S_assign x a) /\
+  (subst_calls ms (S_seq S1 S2) = S_seq (subst_calls ms S1) (subst_calls ms S2)) /\
+  (subst_calls ms (S_ifelse b S1 S2) =
+    S_ifelse b (subst_calls ms S1) (subst_calls ms S2)) /\
+  (subst_calls ms (S_call m) =
+    if m IN ms then S_seq S_skip (S_var m) else S_call m) /\
+  (subst_calls ms (S_var Y) = S_var Y)
+End
+
+Definition G_dom_def:
+  G_dom (G : (string # f) set) = IMAGE FST G
+End
 }}
 
 defns
   sos_defs :: '' ::=
+
 defn
-  c => c' :: :: c_red :: sos_
-  {{ com structural operational semantics }}
+  Tab |- c => c' :: :: c_red :: sos_
+  {{ com structural operational semantics (Figure 1) }}
+  {{ tex [[c]] \Rightarrow [[c']] }}
 by
 
-------------- :: skip
-<<skip,s>> => s
-
-<<S1,s>> => s'
--------------------- :: seq1
-<<S1;S2,s>> => <<S2,s'>>
-
-<<S1,s>> => <<S'1,s'>>
------------------------- :: seq2
-<<S1;S2,s>> => <<S'1;S2,s'>>
+---------------- :: skip
+Tab |- <<skip,s>> => s
 
 A[a](s) = n
---------------------------- :: assign
-<<x := a, s>> => s[x |-> n]
+------------------------------ :: assign
+Tab |- <<x := a, s>> => s[x |-> n]
 
-m{S} in T
--------------------- :: call
-<<m(),s>> => <<S,s>>
+Tab |- <<S1,s>> => s'
+------------------------------ :: seq1
+Tab |- <<S1;S2,s>> => <<S2,s'>>
+
+Tab |- <<S1,s>> => <<S'1,s'>>
+---------------------------------- :: seq2
+Tab |- <<S1;S2,s>> => <<S'1;S2,s'>>
 
 B[b](s) = tt
---------------- :: if1
-<<if b then S1 else S2, s>> => <<S1,s>>
+--------------------------------------------- :: if1
+Tab |- <<if b then S1 else S2, s>> => <<S1,s>>
 
 B[b](s) = ff
---------------- :: if2
-<<if b then S1 else S2, s>> => <<S2,s>>
+--------------------------------------------- :: if2
+Tab |- <<if b then S1 else S2, s>> => <<S2,s>>
 
-grammar
-p :: p_ ::=
-  {{ com state formulas }}
-| b :: :: b
+m{S} in Tab
+------------------------- :: call
+Tab |- <<m(),s>> => <<S,s>>
 
-R :: R_ ::= 
-| Id :: :: Id
-  {{ com identity relation }}
-| Sb [ a , x ] :: :: Sb
-  {{ com Sb relation }}
-| Q :: :: other
-  {{ com other relation }}
+defn
+  Tab |- S |> t :: :: sos_tr :: sos_tr_
+  {{ com finite traces induced by the SOS (Definition 2.6) }}
+  {{ tex [[t]] \in \mathcal{S}_{sos}[\![ [[S]] ]\!] }}
+by
 
-f {{ tex \phi }} :: f_ ::=
-  {{ com trace formulas }}
-  {{ coq-universe Type }}  
-| p :: :: state
-| X :: :: recvar
-| R :: :: rel
-| f1 /\ f2 :: :: and
-| f1 \/ f2 :: :: or
-| f1 ^ f2 :: :: chop
-| mu X . f :: :: mu
-| f [ f' / X ] :: M :: subst
-  {{ coq (f_subst [[f]] [[f']] [[X]]) }}
+Tab |- <<S,s>> => s'
+------------------ :: end
+Tab |- S |> s . s'
 
-embed {{ coq
-
-#[export] Instance a_eq_dec : EqDecision a.
-Proof. by intros x y; solve_decision. Defined.
-
-#[export] Instance b_eq_dec : EqDecision b.
-Proof. by intros x y; solve_decision. Defined.
-
-#[export] Instance S_eq_dec : EqDecision S.
-Proof. by intros x y; solve_decision. Defined.
-
-#[export] Instance R_eq_dec : EqDecision R.
-Proof. by intros x y; solve_decision. Defined.
-
-#[export] Instance p_eq_dec : EqDecision p.
-Proof. by intros x y; solve_decision. Defined.
-
-#[export] Instance f_eq_dec : EqDecision f.
-Proof. intros x y; solve_decision. Defined.
-
-Fixpoint a2gt (a0 : a) : gen_tree (n + x) :=
-match a0 with
-| a_num n0 => GenNode 0 [GenLeaf (inl n0)]
-| a_var x0 => GenNode 1 [GenLeaf (inr x0)]
-| a_uminus a1 => GenNode 2 [a2gt a1]
-| a_plus a1 a2 => GenNode 3 [a2gt a1; a2gt a2]
-| a_minus a1 a2 => GenNode 4 [a2gt a1; a2gt a2]
-| a_times a1 a2 => GenNode 5 [a2gt a1; a2gt a2]
-end.
-
-Fixpoint gt2a (gt : gen_tree (n + x)) : option a :=
-match gt with
-| GenNode 0 [GenLeaf (inl n0)] => Some (a_num n0)
-| GenNode 1 [GenLeaf (inr x0)] => Some (a_var x0)
-| GenNode 2 [gt1] =>
-  match gt2a gt1 with
-  | Some a1 => Some (a_uminus a1)
-  | _ => None
-  end
-| GenNode 3 [gt1; gt2] => 
-  match gt2a gt1, gt2a gt2 with
-  | Some a1, Some a2 => Some (a_plus a1 a2)
-  | _, _ => None
-  end
-| GenNode 4 [gt1; gt2] => 
-  match gt2a gt1, gt2a gt2 with
-  | Some a1, Some a2 => Some (a_minus a1 a2)
-  | _, _ => None
-  end
-| GenNode 5 [gt1; gt2] => 
-  match gt2a gt1, gt2a gt2 with
-  | Some a1, Some a2 => Some (a_times a1 a2)
-  | _, _ => None
-  end
-| _ => None
-end.
-
-Fixpoint b2gt (b0 : b) : gen_tree (a*a) :=
-match b0 with
-| b_true => GenNode 0 []
-| b_false => GenNode 1 []
-| b_eq a1 a2 => GenNode 2 [GenLeaf (a1,a2)]
-| b_leq a1 a2 => GenNode 3 [GenLeaf (a1,a2)]
-| b_neg b1 => GenNode 4 [b2gt b1]
-| b_and b1 b2 => GenNode 5 [b2gt b1; b2gt b2]
-end.
-
-Fixpoint gt2b (gt : gen_tree (a*a)) : option b :=
-match gt with
-| GenNode 0 [] => Some b_true
-| GenNode 1 [] => Some b_false
-| GenNode 2 [GenLeaf (a1,a2)] => Some (b_eq a1 a2)
-| GenNode 3 [GenLeaf (a1,a2)] => Some (b_leq a1 a2)
-| GenNode 4 [gt1] =>
-  match gt2b gt1 with
-  | Some b1 => Some (b_neg b1)
-  | _ => None
-  end
-| GenNode 5 [gt1;gt2] =>
-  match gt2b gt1, gt2b gt2 with
-  | Some b1, Some b2 => Some (b_and b1 b2)
-  | _, _ => None
-  end
-| _ => None
-end.
-
-Fixpoint S2gt (S0 : S) : gen_tree (string + a + b) :=
-match S0 with
-| S_skip => GenNode 0 []
-| S_assign x1 a1 => GenNode 1 [GenLeaf (inl (inl x1)); GenLeaf (inl (inr a1))]
-| S_seq S1 S2 => GenNode 2 [S2gt S1; S2gt S2]
-| S_ifelse b1 S1 S2 => GenNode 3 [GenLeaf (inr b1); S2gt S1; S2gt S2]
-| S_call m1 => GenNode 4 [GenLeaf (inl (inl m1))]
-| S_var Y0 => GenNode 5 [GenLeaf (inl (inl Y0))]
-end.
-
-Fixpoint gt2S (gt : gen_tree (string + a + b)) : option S :=
-match gt with
-| GenNode 0 [] => Some S_skip
-| GenNode 1 [GenLeaf (inl (inl x1)); GenLeaf (inl (inr a1))] => Some (S_assign x1 a1)
-| GenNode 2 [gt1; gt2] =>
-  match gt2S gt1, gt2S gt2 with
-  | Some S1, Some S2 => Some (S_seq S1 S2)
-  | _, _ => None
-  end
-| GenNode 3 [GenLeaf (inr b1); gt1; gt2] => 
-  match gt2S gt1, gt2S gt2 with
-  | Some S1, Some S2 => Some (S_ifelse b1 S1 S2)
-  | _, _ => None
-  end
-| GenNode 4 [GenLeaf (inl (inl m1))] => Some (S_call m1)
-| GenNode 5 [GenLeaf (inl (inl Y0))] => Some (S_var Y0)
-| _ => None
-end.
-
-Definition p2gt (p0 : p) : gen_tree b :=
-match p0 with
-| p_b b1 => GenNode 0 [GenLeaf b1]
-end.
-
-Definition gt2p (gt : gen_tree b) : option p :=
-match gt with
-| GenNode 0 [GenLeaf b1] => Some (p_b b1)
-| _ => None
-end.
-
-Definition R2gt (R0 : R) : gen_tree (string + a) :=
-match R0 with 
-| R_Id => GenNode 0 []
-| R_Sb a1 x1 => GenNode 1 [GenLeaf (inr a1); GenLeaf (inl x1)]
-| R_other Q1 => GenNode 2 [GenLeaf (inl Q1)]
-end.
-
-Definition gt2R (gt : gen_tree (string + a)) : option R :=
-match gt with
-| GenNode 0 [] => Some R_Id
-| GenNode 1 [GenLeaf (inr a1); GenLeaf (inl x1)] => Some (R_Sb a1 x1)
-| GenNode 2 [GenLeaf (inl Q1)] => Some (R_other Q1)
-| _ => None
-end.
-
-Fixpoint f2gt (f0 : f) : gen_tree (p + R + X) :=
-match f0 with
-| f_state p1 => GenNode 0 [GenLeaf (inl (inl p1))]
-| f_recvar X1 => GenNode 1 [GenLeaf (inr X1)]
-| f_rel R1 => GenNode 2 [GenLeaf (inl (inr R1))]
-| f_and f1 f2 => GenNode 3 [f2gt f1; f2gt f2]
-| f_or f1 f2 => GenNode 4 [f2gt f1; f2gt f2]
-| f_chop f1 f2 => GenNode 5 [f2gt f1; f2gt f2]
-| f_mu X1 f1 => GenNode 6 [GenLeaf (inr X1); f2gt f1]
-end.
-
-Fixpoint gt2f (gt : gen_tree (p + R + X)) : option f :=
-match gt with
-| GenNode 0 [GenLeaf (inl (inl p1))] => Some (f_state p1)
-| GenNode 1 [GenLeaf (inr X1)] => Some (f_recvar X1)
-| GenNode 2 [GenLeaf (inl (inr R1))] => Some (f_rel R1)
-| GenNode 3 [gt1; gt2] =>
-  match gt2f gt1, gt2f gt2 with
-  | Some f1, Some f2 => Some (f_and f1 f2)
-  | _, _ => None
-  end
-| GenNode 4 [gt1; gt2] =>
-  match gt2f gt1, gt2f gt2 with
-  | Some f1, Some f2 => Some (f_or f1 f2)
-  | _, _ => None
-  end
-| GenNode 5 [gt1; gt2] =>
-  match gt2f gt1, gt2f gt2 with
-  | Some f1, Some f2 => Some (f_chop f1 f2)
-  | _, _ => None
-  end
-| GenNode 6 [GenLeaf (inr X1); gt1] =>
-  match gt2f gt1 with
-  | Some f1 => Some (f_mu X1 f1)
-  | _ => None
-  end
-| _ => None
-end.
-
-#[export] Instance a_countable : Countable a.
-Proof.
-apply (inj_countable a2gt gt2a).
-induction x0; cbn; try done.
-- by rewrite IHx0.
-- by rewrite IHx0_1, IHx0_2.
-- by rewrite IHx0_1, IHx0_2.
-- by rewrite IHx0_1, IHx0_2.
-Defined.
-
-#[export] Instance b_countable : Countable b.
-Proof.
-apply (inj_countable b2gt gt2b).
-induction x0; cbn; try done.
-- by rewrite IHx0.
-- by rewrite IHx0_1, IHx0_2.
-Defined.
-
-#[export] Instance S_countable : Countable S.
-Proof. 
-apply (inj_countable S2gt gt2S).
-induction x0; cbn; try done.
-- by rewrite IHx0_1, IHx0_2.
-- by rewrite IHx0_1, IHx0_2.
-Defined.
-
-#[export] Instance p_countable : Countable p.
-Proof. 
-by apply (inj_countable p2gt gt2p); destruct x0.
-Defined.
-
-#[export] Instance R_countable : Countable R.
-Proof. 
-by apply (inj_countable R2gt gt2R); destruct x0.
-Defined.
-
-#[export] Instance f_countable : Countable f.
-Proof.
-apply (inj_countable f2gt gt2f).
-induction x0; cbn; try done.
-- by rewrite IHx0_1, IHx0_2.
-- by rewrite IHx0_1, IHx0_2.
-- by rewrite IHx0_1, IHx0_2.
-- by rewrite IHx0.
-Defined.
-
-Definition f_subst (f1 f2 : f) (X1 : X) : f := f1.
-
-Definition f_holds (f1 f2 : f) : Prop := True.
-
-Definition S_subst (S0 : S) (Sl : list (S*S)) : S := S0.
-}}
-grammar
-G {{ tex \Gamma }} :: G_ ::=
-  {{ com set of formulas }}
-  {{ coq (gset (S * f)) }}
-  {{ coq-universe Type }}
-  | G , S : f :: M :: insert
-    {{ com formula insertion }}
-    {{ coq ({[ ([[S]],[[f]]) ]} ∪ [[G]]) }}
-
-embed {{ coq
-Definition calls (G0 : G) (S0 : S) : list (Y*S) := [].
-}}
+Tab |- <<S,s>> => <<S',s'>>
+Tab |- S' |> s' . t
+------------------------- :: step
+Tab |- S |> s . s' . t
 
 defns
   calc_defs :: '' ::=
 
 defn
-  G |- S : f :: :: calc_holds :: calc_
-  {{ com proof calculus }}
+  Tab ; E ; G |- S : f :: :: calc :: calc_
+  {{ com proof calculus (Figure 5, plus explicit structural rules) }}
+  {{ tex [[G]] \vdash [[S]] : [[f]] }}
 by
 
--------------- :: skip
-G |- skip : Id
+----------------------- :: skip
+Tab ; E ; G |- skip : Id
 
--------------------------- :: assign
-G |- x := a : Sb [ a , x ]
+----------------------------------- :: assign
+Tab ; E ; G |- x := a : Sb [ a , x ]
 
-G |- S1 : f1
-G |- S2 : f2
----------------------- :: seq
-G |- S1 ; S2 : f1 ^ f2
+Tab ; E ; G |- S1 : f1
+Tab ; E ; G |- S2 : f2
+------------------------------ :: seq
+Tab ; E ; G |- S1 ; S2 : f1 ^ f2
 
-G |- S : f[mu X.f/X]
--------------------- :: unfold
-G |- S : mu X.f
+Tab ; E ; G |- skip;S1 : ~b \/ f
+Tab ; E ; G |- skip;S2 : b \/ f
+------------------------------------- :: if
+Tab ; E ; G |- if b then S1 else S2 : f
 
-G |- skip;S1 : ~b \/ f
-G |- skip;S2 : b \/ f
------------------------ :: if
-G |- if b then S1 else S2 : f
+closed(mu X.f)
+Tab ; E ; G |- S : f[mu X.f/X]
+---------------------------- :: unfold
+Tab ; E ; G |- S : mu X.f
 
-G |- S : f'
-f |= f'
----------- :: cons
-G |- S : f
+Tab ; E ; G |- S : f'
+f' |= E f
+------------------ :: cons
+Tab ; E ; G |- S : f
 
-m { S } in T
-Y : f notin G
-calls(G, Y : f,S) = Y1,m1() ... Yk,mk()
-G, Y : f |- S [ skip;Y/m() , skip;Y1/m1(), ... , skip;Yk/mk() ] : f
------------------ :: call
-G |- m() : Id^f
+m{S} in Tab
+Y = m
+Y notin dom(G)
+Tab ; E ; G, Y : f |- S[G, Y : f] : f
+----------------------------------- :: call
+Tab ; E ; G |- m() : Id ^ f
 
-embed
-{{ coq
+Y : f in G
+------------------ :: ax
+Tab ; E ; G |- Y : f
 
-End System.
-}}
+Tab ; E ; G |- S : f
+G subset G'
+dom(G) = dom(G')
+------------------- :: weak
+Tab ; E ; G' |- S : f
+
+Y in dom(G)
+Tab ; E ; G |- Y : f'
+Tab ; E ; G, Y : f' |- S : f
+-------------------------- :: cut
+Tab ; E ; G |- S : f
+
+Tab ; E ; G |- S : f1
+Tab ; E ; G |- S : f2
+------------------------ :: andR
+Tab ; E ; G |- S : f1 /\ f2
+
+Tab ; E ; G, Y : f1, Y : f2 |- S : f
+---------------------------------- :: andL
+Tab ; E ; G, Y : f1 /\ f2 |- S : f
+
+Tab ; E ; G, Y : f |- S : f''
+f' |= E f
+---------------------------- :: consL
+Tab ; E ; G, Y : f' |- S : f''
