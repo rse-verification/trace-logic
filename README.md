@@ -1,7 +1,7 @@
 # Trace logic for recursive programs in HOL4
 
-A HOL4 formalization of parts of D. Gurov and R. Hähnle, *An Expressive
-Trace Logic for Recursive Programs* (arXiv:2411.13125, `trace-logic.pdf`),
+A HOL4 formalization of parts of D. Gurov and R. Hähnle, [An Expressive
+Trace Logic for Recursive Programs](https://arxiv.org/abs/2411.13125),
 up to soundness of the proof calculus (Theorem 5.6).
 
 ## Layout
@@ -82,6 +82,18 @@ make ott/traces.pdf
   (which is not capture-avoiding) agrees with semantic substitution. Judgment
   formulas are otherwise not required to be closed; open variables are
   interpreted as `∅`.
+
+  Plain substitution is enough here. (Unfold) is the only rule that
+  substitutes, and it only substitutes the formula `µX.φ` itself. When that
+  formula is closed, nothing can be captured, so plain and capture-avoiding
+  substitution give the same result (up to renaming of bound variables). The
+  side condition costs nothing for the paper's derivations: Definition 5.1
+  requires judgment formulas to be closed, and the body of a closed `µX.φ`
+  has no free variables other than `X`. The strongest trace formulas
+  `stf(∅, S)` used for completeness (Theorem 5.7) are closed as well.
+  Capture-avoiding substitution would only matter for rules that substitute
+  open formulas, such as the fixed-point induction rule for entailment in
+  Section 8.
 - **Procedure tables** are association lists, looked up with `ALOOKUP`
   (first match), so duplicate names need no well-formedness side condition.
   Soundness and Theorem 3.2 assume that procedure bodies contain no statement
