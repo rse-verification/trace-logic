@@ -2,7 +2,9 @@
 
 A HOL4 formalization of parts of D. Gurov and R. Hähnle, [An Expressive
 Trace Logic for Recursive Programs](https://arxiv.org/abs/2411.13125),
-up to soundness of the proof calculus (Theorem 5.6).
+up to soundness of the proof calculus (Theorem 5.6), together with the
+characterisation of strongest trace formulas (Theorem 4.9) and the example
+derivation of Figure 6.
 
 ## Layout
 
@@ -19,10 +21,17 @@ up to soundness of the proof calculus (Theorem 5.6).
 - `hol/tracesSoundScript.sml`: soundness (`calc_sound`, `calc_sound_empty`,
   `calc_sound_sos`) and a counterexample to soundness w.r.t. the paper's
   Definition 5.4 (`original_validity_counterexample`).
-- `hol/evenOddExampleScript.sml`: Example 5.2 / Figure 6. It derives
-  `⊢ even() : stf(even())` for the program of Example 2.2 in the calculus
-  (`even_stf_derivable`). Soundness then gives validity for the denotational
-  semantics (`even_stf_valid`) and for the SOS (`even_stf_valid_sos`).
+- `hol/tracesStfScript.sml`: strongest trace formulas (Definition 4.6,
+  `stf`), Theorem 4.9 (`stf_Str`, and `stf_Ssos` for the SOS), Corollary 5.5
+  (`stf_strongest`), lemmas about unfolding strongest trace formulas, and
+  Example 4.8 (`example_4_8`, by evaluation).
+- `hol/evenOddExampleScript.sml`: Example 4.7 (`example_4_7`, by
+  evaluation) and Example 5.2 / Figure 6. It derives
+  `⊢ even() : stf(even())` for the program of Example 2.2 in the calculus as
+  in Figure 6 (`even_stf_derivable`), and by a shorter derivation without
+  (Cons) at calls (`even_stf_derivable_short`). Soundness then gives validity
+  for the denotational semantics (`even_stf_valid`) and for the SOS
+  (`even_stf_valid_sos`).
 - `hol/ott*.sml`: Ott support library for HOL4, from HolBA
   (`examples/bir/compute/src/theory`).
 
@@ -105,13 +114,28 @@ make ott/traces.pdf
 - **States** are total functions `string -> int`. Arithmetic and Boolean
   expressions are concrete (as in the earlier Ott file). Other relation
   symbols `Q` are interpreted by a parameter `relI`.
-- **Example 5.2 / Figure 6.** stf(even()) (Example 4.7) is written out as a
-  formula, since `stf` itself is not formalized. Chop is associated to the
-  right, as rule (Seq) builds it. In the derivation, (Call) on `odd()` uses
-  as its contract the µX_odd-formula that unfolding ϕ_even produces, instead
-  of stf(odd()) as in Figure 6. That makes the two (Cons) steps Figure 6
-  needs at `odd()` and `Y_even` unnecessary; those steps would need
-  fixed-point reasoning about differently nested µ-formulas. The only (Cons)
-  steps left are the premises of (If). Their entailments hold for any
-  formulas of the shape `(b ∧ Id⌢F₁) ∨ (¬b ∧ Id⌢F₂)` (`if_then_ent`,
-  `if_else_ent`). The entailment oracle is semantic entailment (`sem_ent`).
+- **Strongest trace formulas (Definition 4.6).** The recursion variable
+  `X_m` is named `m`, as `Y_m` is, and the set X of Figure 4 is a list.
+  Termination is by the number of declared procedures not in X, then by the
+  size of S. For a statement variable `Y`, `stf(Y) = X_Y`. Theorem 4.9 is
+  proved for programs without statement variables, as for soundness. Its
+  proof does not use modal equation systems (Appendix A.2). Instead,
+  `stf_sem_ovr` generalizes it to open formulas: with the procedures in X
+  treated as statement variables (as in the corrected validity), `stf(X, S)`
+  denotes the traces of S. The case of a call is one step of Bekič's
+  principle (`rho0_bekic`). Corollary 5.5 is proved as an equivalence:
+  `S : φ` is valid iff `stf(S)` entails φ.
+- **Examples 4.7 and 4.8.** With the naming above, the formulas are those of
+  the paper, with chop associated to the right, as Definition 4.6 builds it.
+  In Example 4.8, `x > 0` is written `¬(x ≤ 0)`, since Boolean expressions
+  have no `>`, and so `x ≤ 0` appears as `¬¬(x ≤ 0)`.
+- **Example 5.2 / Figure 6.** The oracle for (Cons) is semantic entailment
+  (`sem_ent`). The derivation follows Figure 6, with explicit steps in place
+  of the vertical dots. Each of the two (Cons) steps at `odd()` and `Y_even`
+  relates a strongest trace formula to its unfolding; both formulas have the
+  same semantics by Theorem 4.9 and the unfolding lemmas (`stf_unfold_Str`,
+  `stf_unfold_mu`). The other (Cons) steps are the premises of (If). Their
+  entailments hold for any formulas of the shape `(b ∧ Id⌢F₁) ∨ (¬b ∧
+  Id⌢F₂)` (`if_then_ent`, `if_else_ent`). A shorter derivation
+  (`even_stf_derivable_short`) uses the unfolded formula as the contract for
+  `odd()`, which makes the two (Cons) steps unnecessary.
