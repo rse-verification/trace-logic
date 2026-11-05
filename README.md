@@ -19,6 +19,10 @@ up to soundness of the proof calculus (Theorem 5.6).
 - `hol/tracesSoundScript.sml`: soundness (`calc_sound`, `calc_sound_empty`,
   `calc_sound_sos`) and a counterexample to soundness w.r.t. the paper's
   Definition 5.4 (`original_validity_counterexample`).
+- `hol/evenOddExampleScript.sml`: Example 5.2 / Figure 6. It derives
+  `⊢ even() : stf(even())` for the program of Example 2.2 in the calculus
+  (`even_stf_derivable`). Soundness then gives validity for the denotational
+  semantics (`even_stf_valid`) and for the SOS (`even_stf_valid_sos`).
 - `hol/ott*.sml`: Ott support library for HOL4, from HolBA
   (`examples/bir/compute/src/theory`).
 
@@ -101,3 +105,13 @@ make ott/traces.pdf
 - **States** are total functions `string -> int`. Arithmetic and Boolean
   expressions are concrete (as in the earlier Ott file). Other relation
   symbols `Q` are interpreted by a parameter `relI`.
+- **Example 5.2 / Figure 6.** stf(even()) (Example 4.7) is written out as a
+  formula, since `stf` itself is not formalized. Chop is associated to the
+  right, as rule (Seq) builds it. In the derivation, (Call) on `odd()` uses
+  as its contract the µX_odd-formula that unfolding ϕ_even produces, instead
+  of stf(odd()) as in Figure 6. That makes the two (Cons) steps Figure 6
+  needs at `odd()` and `Y_even` unnecessary; those steps would need
+  fixed-point reasoning about differently nested µ-formulas. The only (Cons)
+  steps left are the premises of (If). Their entailments hold for any
+  formulas of the shape `(b ∧ Id⌢F₁) ∨ (¬b ∧ Id⌢F₂)` (`if_then_ent`,
+  `if_else_ent`). The entailment oracle is semantic entailment (`sem_ent`).
