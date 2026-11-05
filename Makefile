@@ -6,6 +6,12 @@ hol/tracesScript.sml: ott/traces.ott
 ott/traces.pdf: ott/traces.ott
 	cd ott && $(OTT) -i traces.ott -o traces.tex && pdflatex -interaction=nonstopmode traces.tex
 
+doc/ott-rules.tex: ott/traces.ott
+	cd doc && $(OTT) -i ../ott/traces.ott -o ott-rules.tex -tex_wrap false -tex_name_prefix ott
+
+doc/note.pdf: doc/note.tex doc/ott-rules.tex
+	cd doc && pdflatex -interaction=nonstopmode note.tex && pdflatex -interaction=nonstopmode note.tex
+
 build: hol/tracesScript.sml
 	holbuild build
 

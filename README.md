@@ -32,6 +32,9 @@ derivation of Figure 6.
   (Cons) at calls (`even_stf_derivable_short`). Soundness then gives validity
   for the denotational semantics (`even_stf_valid`) and for the SOS
   (`even_stf_valid_sos`).
+- `doc/note.tex`: a short note that describes, in the notation of the
+  paper, how the formalization differs from it. The table under
+  [Note to HOL4](#note-to-hol4) maps its numbered items to HOL4 names.
 - `hol/ott*.sml`: Ott support library for HOL4, from HolBA
   (`examples/bir/compute/src/theory`).
 
@@ -65,6 +68,43 @@ To typeset the Ott definitions and rules as `ott/traces.pdf` (needs `pdflatex`):
 ```
 make ott/traces.pdf
 ```
+
+To typeset the note as `doc/note.pdf` (needs Ott and `pdflatex`; the rule
+figures are generated from `ott/traces.ott`):
+
+```
+make doc/note.pdf
+```
+
+## Note to HOL4
+
+Numbered items of `doc/note.tex` and the corresponding HOL4 definitions and
+theorems. Theory `traces` is generated from the Ott file.
+
+| Note | HOL4 name | Theory |
+|------|-----------|--------|
+| Definition 2.1 (procedure tables) | `Tab` (type), `ALOOKUP`, `tbl_var_free` | `traces`, `tracesSos` |
+| Definition 2.2 (relative trace semantics) | `Str0`, `ovr`, `H`, `rho0`, `Str` | `tracesSem`, `tracesSound` |
+| Theorem 2.3 (paper Thm 3.2) | `Str_eq_Ssos` | `tracesSos` |
+| Lemma 3.1 (substitution, paper Prop 4.3) | `f_sem_subst`, `fsem_unfold` | `tracesSem` |
+| Definition 4.1 (paper Def 4.6) | `stf` | `tracesStf` |
+| Lemma 4.2 (Bekič step) | `rho0_bekic` | `tracesStf` |
+| Lemma 4.3 (open stf) | `stf_sem_ovr` | `tracesStf` |
+| Theorem 4.4 (paper Thm 4.9) | `stf_Str`, `stf_Ssos` | `tracesStf` |
+| Lemma 4.5 (exact hypotheses) | `rho0_ovr_solution`, `Str_ovr_solution` | `tracesStf` |
+| Lemma 4.6 (unfolding stf) | (a) `stf_unfold_Str`, (b) `stf_unfold_mu` | `tracesStf` |
+| Example 4.7 (paper Ex 4.7, 4.8) | `example_4_7`, `example_4_8` | `evenOddExample`, `tracesStf` |
+| Figure 1 (calculus) | `calc` (rules `calc_skip`, …) | `traces` |
+| Proposition 5.1 (counterexample) | `original_validity_counterexample` | `tracesSound` |
+| Definition 5.2 (corrected validity) | `valid` (paper's version: `valid_orig`) | `tracesSound` |
+| Proposition 5.3 | `valid_orig_empty` | `tracesSound` |
+| Theorem 5.4 (paper Thm 5.6) | `calc_sound` | `tracesSound` |
+| Corollary 5.5 | `calc_sound_empty`, `calc_sound_sos` | `tracesSound` |
+| Lemma 5.6 (fixed-point induction) | `call_fixpoint_induction`, `call_sound` | `tracesSound` |
+| Corollary 5.7 (paper Cor 5.5) | `stf_strongest` | `tracesStf` |
+| Theorem 6.1 (paper Ex 5.2, Fig 6) | `even_stf_derivable`, `even_stf_valid`, `even_stf_valid_sos`; (Cons) steps `if_then_ent`, `if_else_ent`, `odd_call_ent`, `even_var_ent` | `evenOddExample` |
+| Remark 6.2 | `even_stf_derivable_short` | `evenOddExample` |
+| Figure 2 (SOS) | `c_red`, `sos_tr`, `Ssos` | `traces`, `tracesSos` |
 
 ## Deviations from the paper
 

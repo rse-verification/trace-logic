@@ -5,3 +5,6 @@
 ott/traces.tex
 ott/traces.pdf
 trace-logic.pdf
+*.out
+doc/ott-rules.tex
+doc/note.pdf
