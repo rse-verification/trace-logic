@@ -32,6 +32,8 @@
 \newcommand{\Tr}{\State^{*}}
 \newcommand{\pow}[1]{2^{#1}}
 \newcommand{\lfp}{\mathrm{lfp}}
+% A numbered item of the paper [GH], e.g. \GH{Definition~5.4}.
+\newcommand{\GH}[1]{#1 of GH}
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
@@ -58,10 +60,10 @@
 
 This note accompanies a HOL4 formalization of parts of the paper
 \emph{An Expressive Trace Logic for Recursive Programs} by Gurov and
-H\"ahnle~\cite{GH}. The formalization covers the syntax and semantics of the
-programming language Rec, the trace logic, strongest trace formulas, and the
-proof calculus. Its main results are soundness of the calculus (Theorem~5.6
-of the paper), the characterisation of strongest trace formulas
+H\"ahnle~\cite{GH} (henceforth GH). The formalization covers the syntax and
+semantics of the programming language Rec, the trace logic, strongest trace
+formulas, and the proof calculus. Its main results are soundness of the
+calculus (\GH{Theorem~5.6}), the characterisation of strongest trace formulas
 (Theorem~4.9), the correctness of the trace semantics with respect to the
 SOS (Theorem~3.2), and the example derivation of Figure~6.
 
@@ -72,7 +74,7 @@ differently. Results that the formalization proves as stated in the paper,
 under the conventions of Section~\ref{sec:prelim}, are mentioned only
 briefly. The noteworthy changes and additions are:
 \begin{itemize}
-\item \emph{Validity of sequents.} With [GH, Definition~5.4], the calculus
+\item \emph{Validity of sequents.} With \GH{Definition~5.4}, the calculus
   is not sound for non-empty antecedents
   (Proposition~\ref{prop:counter}). The corrected definition interprets the
   procedures in the domain of the antecedent by their hypotheses
@@ -91,7 +93,7 @@ briefly. The noteworthy changes and additions are:
 \item \emph{Proof structure.} The (Call) case of soundness is a
   fixed-point induction over all procedures at once, instead of an argument
   for one procedure plus Beki\v{c}'s principle (Lemma~\ref{lem:call}). The
-  proof of [GH, Theorem~4.9] does not use modal equation systems; it goes
+  proof of \GH{Theorem~4.9} does not use modal equation systems; it goes
   through a generalization to open formulas (Lemma~\ref{lem:stf-open}) and
   a single step of Beki\v{c}'s principle (Lemma~\ref{lem:bekic}).
 \item \emph{Figure~6 in full} (Section~\ref{sec:example}). The two (Cons)
@@ -102,8 +104,8 @@ briefly. The noteworthy changes and additions are:
 
 Each numbered definition and result in this note corresponds to a HOL4
 definition or theorem. The file \texttt{README.md} of the formalization
-lists them by the numbers used here. References of the form ``[GH,
-Definition 5.4]'' are to the paper.
+lists them by the numbers used here. References such as
+``\GH{Definition~5.4}'' are to the paper.
 
 \section{Programs and their semantics}\label{sec:prelim}
 
@@ -123,8 +125,8 @@ sequence.
   \emph{variable-free} if no $S_m$ contains a statement variable.
 \end{definition}
 
-Statements may contain statement variables $Y$ [GH, Section~5]. A procedure
-$m$ and the statement variable $Y_m$ associated with it [GH, Section~5.1.1]
+Statements may contain statement variables $Y$ (\GH{Section~5}). A procedure
+$m$ and the statement variable $Y_m$ associated with it (\GH{Section~5.1.1})
 are identified by their name: $Y_m$ \emph{is} $m$. An interpretation of
 statement variables is a function $I$ from names to $\pow{\Tr}$; an
 interpretation of procedures $\rho$ has the same type.
@@ -132,7 +134,7 @@ interpretation of procedures $\rho$ has the same type.
 \begin{definition}[Trace semantics, relative to a set of procedures]
   \label{def:str}
   The helper semantics $\Str'\sem{S}_{\rho,I}$ is defined by the equations of
-  [GH, Figure~2], with $\Str'\sem{\call{m}}_{\rho,I} = \rho(m)$ and
+  \GH{Figure~2}, with $\Str'\sem{\call{m}}_{\rho,I} = \rho(m)$ and
   $\Str'\sem{Y}_{\rho,I} = I(Y)$. Let $D$ be a set of procedure names, and
   define the transformer $H^D_I$ on interpretations of procedures by
   \[
@@ -146,8 +148,7 @@ interpretation of procedures $\rho$ has the same type.
   Let $\rho^D_I$ be its least fixed point, and define
   $\Str^D_I\sem{S} = \Str'\sem{S}_{\rho^D_I,I}$. We write
   $\Str_I\sem{S}$ for $\Str^{\emptyset}_I\sem{S}$; this is the semantics of
-  [GH, Definition~3.1], relativized on $I$ as described in [GH,
-  Section~5].
+  \GH{Definition~3.1}, relativized on $I$ as described in \GH{Section~5}.
 \end{definition}
 
 The set $D$ is new. In $\Str^D_I$, a procedure $m \in D$ behaves as
@@ -159,15 +160,15 @@ assumes that every called procedure is declared.
 
 Least fixed points, here and for $\mu$-formulas, are defined as the
 intersection of all pre-fixed points (Knaster--Tarski). Only monotonicity is
-needed; the continuity argument of [GH, Section~3] is not used.
+needed; the continuity argument of \GH{Section~3} is not used.
 
-\begin{theorem}[{[GH, Theorem~3.2]}]\label{thm:sos}
+\begin{theorem}[\GH{Theorem~3.2}]\label{thm:sos}
   If $T$ and $S$ are variable-free, then $\Str_I\sem{S} = \Ssos\sem{S}$ for
   every $I$.
 \end{theorem}
 
-The SOS and the induced traces are defined as in [GH, Figure~1 and
-Definition~2.6]; Figure~\ref{fig:sos} in the appendix shows them as
+The SOS and the induced traces are defined as in \GH{Figure~1 and
+Definition~2.6}; Figure~\ref{fig:sos} in the appendix shows them as
 formalized. The SOS has no rule for statement variables, hence the
 restriction to variable-free programs. The inclusion
 $\Ssos\sem{S} \subseteq \Str_I\sem{S}$ is by induction on the length of the
@@ -177,10 +178,10 @@ $\rho^{\emptyset}_I$ by leastness.
 
 \section{Trace formulas}
 
-Formulas are as in [GH, Definition~4.1]. State formulas $p$ are Boolean
+Formulas are as in \GH{Definition~4.1}. State formulas $p$ are Boolean
 expressions. Besides $\Id$ and $\Sb{a}{x}$, relation symbols are interpreted
-by a fixed parameter. The semantics $\fsem{\phi}_V$ is that of [GH,
-Figure~3], with $\fsem{\mu X.\phi}_V$ the least pre-fixed point. For an
+by a fixed parameter. The semantics $\fsem{\phi}_V$ is that of \GH{Figure~3}, with
+$\fsem{\mu X.\phi}_V$ the least pre-fixed point. For an
 arbitrary formula we write $\fsem{\phi}$ for $\fsem{\phi}_{V_\emptyset}$,
 where $V_\emptyset(X) = \emptyset$ for all $X$; for closed formulas this
 agrees with the paper. Substitution $\phi[\psi/X]$ is the plain syntactic
@@ -191,7 +192,7 @@ variables.
   If $\psi$ is closed, then
   $\fsem{\phi[\psi/X]}_V = \fsem{\phi}_{V[X \mapsto \fsem{\psi}]}$.
   Consequently, if $\mu X.\phi$ is closed, then
-  $\fsem{\phi[\mu X.\phi/X]} = \fsem{\mu X.\phi}$ [GH, Proposition~4.3].
+  $\fsem{\phi[\mu X.\phi/X]} = \fsem{\mu X.\phi}$ (\GH{Proposition~4.3}).
 \end{lemma}
 
 For a closed $\psi$, nothing can be captured, so plain substitution agrees
@@ -202,8 +203,8 @@ substitution would only be needed for rules that substitute open formulas.
 
 \section{Strongest trace formulas}
 
-\begin{definition}[{[GH, Definition~4.6]}]\label{def:stf}
-  $\stf(X, S)$ is defined by the equations of [GH, Figure~4], with
+\begin{definition}[\GH{Definition~4.6}]\label{def:stf}
+  $\stf(X, S)$ is defined by the equations of \GH{Figure~4}, with
   $\stf(X, Y) = Y$ for a statement variable $Y$ (read as a recursion
   variable). As for statement variables, the recursion variable $X_m$ is
   identified with the name $m$. The recursion terminates: in the case of a
@@ -214,8 +215,8 @@ substitution would only be needed for rules that substitute open formulas.
 
 Because $X_m$, $Y_m$ and $m$ are identified, a valuation $V$ of recursion
 variables is also an interpretation of statement variables. This makes the
-following generalization of [GH, Theorem~4.9] to open formulas possible. It
-replaces the argument via modal equation systems in [GH, Appendix~A.2].
+following generalization of \GH{Theorem~4.9} to open formulas possible. It
+replaces the argument via modal equation systems in \GH{Appendix~A.2}.
 
 \begin{lemma}[One step of Beki\v{c}'s principle]\label{lem:bekic}
   Let $T$ be variable-free, $m \notin D$ and $m\,\{S_m\} \in T$. Then
@@ -252,7 +253,7 @@ replaces the argument via modal equation systems in [GH, Appendix~A.2].
   $\dup\Str^X_V\sem{S_m} = \rho^X_V(m)$.
 \end{proof}
 
-\begin{theorem}[{[GH, Theorem~4.9]}]\label{thm:stf}
+\begin{theorem}[\GH{Theorem~4.9}]\label{thm:stf}
   If $T$ and $S$ are variable-free, then
   $\fsem{\stf(S)} = \Str_I\sem{S} = \Ssos\sem{S}$ for every $I$.
 \end{theorem}
@@ -283,7 +284,7 @@ Both parts follow from Lemmas~\ref{lem:subst}, \ref{lem:bekic},
 \ref{lem:stf-open} and~\ref{lem:exact}, since $\fsem{\phi_n} =
 \Str_I\sem{S_n}$.
 
-\begin{example}[{[GH, Examples~4.7 and~4.8]}]\label{ex:stf}
+\begin{example}[\GH{Examples~4.7 and~4.8}]\label{ex:stf}
   Evaluating Definition~\ref{def:stf} yields the formulas of the paper,
   with recursion variables named after the procedures. Chop is nested to the
   right, as the definition builds it: $\Id\chop\Sb{x-1}{x}\chop\Id\chop X$
@@ -327,8 +328,8 @@ Both parts follow from Lemmas~\ref{lem:subst}, \ref{lem:bekic},
   \label{fig:calculus}
 \end{figure}
 
-Figure~\ref{fig:calculus} shows the calculus. It differs from [GH,
-Figure~5] as follows.
+Figure~\ref{fig:calculus} shows the calculus. It differs from
+\GH{Figure~5} as follows.
 
 \begin{itemize}
 \item \emph{Antecedents} $\Gamma$ are sets of judgments $Y : \phi$ about
@@ -357,7 +358,7 @@ Figure~5] as follows.
 
 \subsection{Validity}\label{sec:validity}
 
-[GH, Definition~5.4] calls $\Gamma \vdash S : \phi$ valid if
+\GH{Definition~5.4} calls $\Gamma \vdash S : \phi$ valid if
 $\Str_I\sem{S} \subseteq \fsem{\phi}$ for every $I$ in which all judgments
 of $\Gamma$ are valid. With this definition the calculus is not sound when
 $\Gamma$ is non-empty.
@@ -366,8 +367,7 @@ $\Gamma$ is non-empty.
   Let $T = \{m\,\{\call{m_1}\},\ m_1\,\{\skipS\}\}$ and
   $\Gamma = \{Y_{m_1} : \mathit{false}\}$. Then
   $\Gamma \vdash \call{m} : \Id\chop\Id\chop\mathit{false}$ is derivable
-  (with any oracle), but it is not valid in the sense of [GH,
-  Definition~5.4].
+  (with any oracle), but it is not valid in the sense of \GH{Definition~5.4}.
 \end{proposition}
 
 \begin{proof}
@@ -392,11 +392,11 @@ its domain.
 \end{definition}
 
 \begin{proposition}\label{prop:empty}
-  For $\Gamma = \emptyset$, Definition~\ref{def:valid} and [GH,
-  Definition~5.4] coincide.
+  For $\Gamma = \emptyset$, Definition~\ref{def:valid} coincides with
+  \GH{Definition~5.4}.
 \end{proposition}
 
-\begin{theorem}[Soundness, {[GH, Theorem~5.6]}]\label{thm:sound}
+\begin{theorem}[Soundness, \GH{Theorem~5.6}]\label{thm:sound}
   Let $T$ be variable-free and the oracle sound. Then every derivable
   sequent is valid in the sense of Definition~\ref{def:valid}.
 \end{theorem}
@@ -431,16 +431,16 @@ does not change the semantics of $S_m$. So the hypothesis of
 Lemma~\ref{lem:call} holds, and $\Str^D_I\sem{\call{m}} = \rho^D_I(m)
 \subseteq \dup\fsem{\phi} = \fsem{\Id\chop\phi}$.
 
-Finally, [GH, Corollary~5.5] holds as an equivalence.
+Finally, \GH{Corollary~5.5} holds as an equivalence.
 
-\begin{corollary}[{[GH, Corollary~5.5]}]\label{cor:strongest}
+\begin{corollary}[\GH{Corollary~5.5}]\label{cor:strongest}
   If $T$ and $S$ are variable-free, then $\models S : \phi$ if and only if
   $\fsem{\stf(S)} \subseteq \fsem{\phi}$.
 \end{corollary}
 
 \section{The derivation of Figure~6}\label{sec:example}
 
-Let $T$ be the procedure table of [GH, Example~2.2], with procedures
+Let $T$ be the procedure table of \GH{Example~2.2}, with procedures
 $\mathit{even}$ and $\mathit{odd}$, and let
 $\phi_{\mathit{even}} = \mu X_{\mathit{even}}.\stf(\{\mathit{even}\},
 S_{\mathit{even}})$ and $\phi_{\mathit{odd}} = \mu
@@ -448,9 +448,9 @@ X_{\mathit{odd}}.\stf(\{\mathit{odd}\}, S_{\mathit{odd}})$. The oracle is
 semantic entailment: $\phi' \models \phi$ iff $\fsem{\phi'} \subseteq
 \fsem{\phi}$.
 
-\begin{theorem}[{[GH, Example~5.2]}]\label{thm:example}
+\begin{theorem}[\GH{Example~5.2}]\label{thm:example}
   $\vdash \call{\mathit{even}} : \stf(\call{\mathit{even}})$ is derivable,
-  by a derivation that follows [GH, Figure~6]. Consequently, every trace in
+  by a derivation that follows \GH{Figure~6}. Consequently, every trace in
   $\Str_I\sem{\call{\mathit{even}}} = \Ssos\sem{\call{\mathit{even}}}$
   satisfies $\stf(\call{\mathit{even}})$.
 \end{theorem}
@@ -520,8 +520,8 @@ semantics:
     \ottdrulesosXXtrXXend{End} \qquad
     \ottdrulesosXXtrXXstep{Step}
   \]
-  \caption{The SOS [GH, Figure~1] and the induced traces [GH,
-    Definition~2.6], as formalized (generated from the Ott source).}
+  \caption{The SOS (\GH{Figure~1}) and the induced traces
+    (\GH{Definition~2.6}), as formalized (generated from the Ott source).}
   \label{fig:sos}
 \end{figure}
 
