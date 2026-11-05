@@ -68,11 +68,37 @@ SOS (Theorem~3.2), and the example derivation of Figure~6.
 The formalization follows the paper closely. This note describes where it
 differs, written as if the formalization were a paper: which definitions are
 made more precise, which statements change, and how some proofs are done
-differently. The most important difference is that Definition~5.4 (validity
-of sequents) has to be changed for the calculus to be sound
-(Section~\ref{sec:validity}). Results that the formalization proves as
-stated in the paper, under the conventions of Section~\ref{sec:prelim}, are
-mentioned only briefly.
+differently. Results that the formalization proves as stated in the paper,
+under the conventions of Section~\ref{sec:prelim}, are mentioned only
+briefly. The noteworthy changes and additions are:
+\begin{itemize}
+\item \emph{Validity of sequents.} With [GH, Definition~5.4], the calculus
+  is not sound for non-empty antecedents
+  (Proposition~\ref{prop:counter}). The corrected definition interprets the
+  procedures in the domain of the antecedent by their hypotheses
+  (Definition~\ref{def:valid}). It agrees with the paper's for empty
+  antecedents, and soundness holds for all sequents
+  (Section~\ref{sec:validity}).
+\item \emph{Semantics relative to a set of procedures}
+  (Definition~\ref{def:str}). It makes precise what the (Call) rule assumes,
+  and is used both for validity and for strongest trace formulas.
+\item \emph{Structural rules and side conditions of the calculus}
+  (Section~\ref{sec:calculus}). The paper omits the structural rules; the
+  formalization gives them explicitly. Some must preserve the domain of the
+  antecedent, and a left rule for $\lor$ is unsound. (Unfold) requires a
+  closed fixed-point formula, which makes plain substitution sufficient
+  (Lemma~\ref{lem:subst}).
+\item \emph{Proof structure.} The (Call) case of soundness is a
+  fixed-point induction over all procedures at once, instead of an argument
+  for one procedure plus Beki\v{c}'s principle (Lemma~\ref{lem:call}). The
+  proof of [GH, Theorem~4.9] does not use modal equation systems; it goes
+  through a generalization to open formulas (Lemma~\ref{lem:stf-open}) and
+  a single step of Beki\v{c}'s principle (Lemma~\ref{lem:bekic}).
+\item \emph{Figure~6 in full} (Section~\ref{sec:example}). The two (Cons)
+  steps that the paper justifies informally follow from lemmas about
+  unfolding strongest trace formulas (Lemma~\ref{lem:unfold}). A shorter
+  derivation needs neither of them (Remark~\ref{rem:short}).
+\end{itemize}
 
 Each numbered definition and result in this note corresponds to a HOL4
 definition or theorem. The file \texttt{README.md} of the formalization
