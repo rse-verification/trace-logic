@@ -1,11 +1,9 @@
 (* Strongest trace formulas (Definition 4.6) and their characterisation
    (Theorem 4.9), with Corollary 5.5. *)
 
-open HolKernel boolLib Parse bossLib;
-open pred_setTheory listTheory alistTheory combinTheory pairTheory
-     ottTheory tracesTheory tracesSemTheory tracesSosTheory tracesSoundTheory;
-
-val _ = new_theory "tracesStf";
+Theory tracesStf
+Ancestors
+  pred_set list alist combin pair ott traces tracesSem tracesSos tracesSound
 
 (* ------------------------------------------------------------------------ *)
 (* Definition 4.6                                                           *)
@@ -393,4 +391,3 @@ Proof
   EVAL_TAC
 QED
 
-val _ = export_theory ();

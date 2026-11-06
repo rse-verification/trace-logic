@@ -1,11 +1,9 @@
 (* Denotational semantics of Rec statements (Section 3, Definition 3.1)
    and of trace formulas (Section 4, Definition 4.2). *)
 
-open HolKernel boolLib Parse bossLib;
-open pred_setTheory listTheory rich_listTheory alistTheory combinTheory
-     pairTheory ottTheory tracesTheory;
-
-val _ = new_theory "tracesSem";
+Theory tracesSem
+Ancestors
+  pred_set list rich_list alist combin pair ott traces
 
 Type state = ``:string -> int``
 Type trace = ``:state list``
@@ -351,4 +349,3 @@ Proof
   rw[fsem_def, f_sem_def, R_sem_def, EXTENSION] >> rw[chop_id, dup_def]
 QED
 
-val _ = export_theory ();

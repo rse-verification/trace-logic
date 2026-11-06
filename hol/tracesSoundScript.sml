@@ -1,11 +1,9 @@
 (* Soundness of the proof calculus (Theorem 5.6), with respect to a corrected
    version of Definition 5.4. *)
 
-open HolKernel boolLib Parse bossLib;
-open pred_setTheory listTheory alistTheory combinTheory pairTheory
-     ottTheory tracesTheory tracesSemTheory tracesSosTheory;
-
-val _ = new_theory "tracesSound";
+Theory tracesSound
+Ancestors
+  pred_set list alist combin pair ott traces tracesSem tracesSos
 
 (* ------------------------------------------------------------------------ *)
 (* Validity of judgments and sequents                                       *)
@@ -343,4 +341,3 @@ Proof
       qexists_tac `[K 0; K 0; K 0; K 0]` >> rw[])
 QED
 
-val _ = export_theory ();

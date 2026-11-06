@@ -1,12 +1,10 @@
 (* Example 5.2 / Figure 6: a derivation of even() : stf(even()) for the
    program of Example 2.2, and its validity via soundness. *)
 
-open HolKernel boolLib Parse bossLib;
-open pred_setTheory listTheory alistTheory combinTheory
-     ottTheory tracesTheory tracesSemTheory tracesSosTheory tracesSoundTheory
-     tracesStfTheory;
-
-val _ = new_theory "evenOddExample";
+Theory evenOddExample
+Ancestors
+  pred_set list alist combin ott traces tracesSem tracesSos tracesSound
+  tracesStf
 
 (* ------------------------------------------------------------------------ *)
 (* The program of Example 2.2                                               *)
@@ -258,4 +256,3 @@ Proof
   metis_tac[sem_ent_sound, even_stf_derivable]
 QED
 
-val _ = export_theory ();

@@ -1,11 +1,9 @@
 (* Theorem 3.2: the denotational finite-trace semantics coincides with the
    finite-trace semantics induced by the SOS. *)
 
-open HolKernel boolLib Parse bossLib;
-open pred_setTheory listTheory rich_listTheory alistTheory combinTheory
-     ottTheory tracesTheory tracesSemTheory;
-
-val _ = new_theory "tracesSos";
+Theory tracesSos
+Ancestors
+  pred_set list rich_list alist combin ott traces tracesSem
 
 (* S_sos[[S]] of Definition 2.6 *)
 Definition Ssos_def:
@@ -151,4 +149,3 @@ Proof
   metis_tac[SUBSET_ANTISYM, Str_SUBSET_Ssos, Ssos_SUBSET_Str]
 QED
 
-val _ = export_theory ();

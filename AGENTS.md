@@ -19,6 +19,10 @@ notes below apply to any Ott + HOL4 formalization.
 - `make hol/tracesScript.sml` regenerates the HOL script from `ott/traces.ott`.
   `make ott/traces.pdf` typesets the Ott file. The generated script is
   committed; never edit it by hand.
+- Hand-written theory scripts start with a `Theory` / `Ancestors` header
+  and have no `new_theory` or `export_theory` call. Two scripts keep the old
+  style: the generated `hol/tracesScript.sml`, and `hol/ottScript.sml`,
+  which is kept as in Ott repository upstream as far as possible.
 - Before finishing, do a clean build: `Holmake cleanAll && Holmake`. Then check
   that no main theorem depends on a cheat or oracle: `grep -n cheat hol/*.sml`,
   and `Tag.dest_tag (Thm.tag th)` should list no oracles besides `DISK_THM`.
