@@ -10,6 +10,10 @@ notes below apply to any Ott + HOL4 formalization.
 - `Holmake` at the repository root builds all HOL4 files. The root
   `Holmakefile` has `CLINE_OPTIONS = -r` and lists the HOL directories in
   `INCLUDES`.
+- A new HOL directory (e.g. `hol/verif`) must be added in two places: to
+  `INCLUDES` in the root `Holmakefile` for Holmake, and to `members` in
+  `holbuild.toml` for holbuild. It also needs its own `Holmakefile` with
+  `INCLUDES = ..` to see the theories in `hol`.
 - `holbuild build` builds against the HOL4 commit pinned in `holbuild.toml`.
   `rev` must be the commit of the tag (`git ls-remote
   https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`), not the
@@ -24,7 +28,7 @@ notes below apply to any Ott + HOL4 formalization.
   style: the generated `hol/tracesScript.sml`, and `hol/ottScript.sml`,
   which is kept as in Ott repository upstream as far as possible.
 - Before finishing, do a clean build: `Holmake cleanAll && Holmake`. Then check
-  that no main theorem depends on a cheat or oracle: `grep -n cheat hol/*.sml`,
+  that no main theorem depends on a cheat or oracle: `grep -rn cheat hol`,
   and `Tag.dest_tag (Thm.tag th)` should list no oracles besides `DISK_THM`.
 
 ## Using holbuild effectively when developing proofs
@@ -114,3 +118,17 @@ notes below apply to any Ott + HOL4 formalization.
   point.
 - `rw` does not rewrite with assumptions; `fs` does. Use `fs` when a case
   split depends on a hypothesis such as `m NOTIN D`.
+- Rule induction on an `Inductive` relation: use `ho_match_mp_tac
+  <rel>_strongind` when a case needs the premises themselves (e.g. to invert
+  them or apply another lemma to them); `<rel>_ind` keeps only the induction
+  hypotheses. If the relation has a parameter (a variable free in every rule,
+  such as a procedure table `lk`), state the goal as `!lk x y. rel lk x y ==>
+  ...` and do `gen_tac` before `ho_match_mp_tac`; otherwise matching fails
+  with `match: safe_insert`.
+- After `rw[..., PULL_EXISTS]` the order of the existentials in the goal is
+  hard to predict, so witnesses in `qexistsl_tac` often land in the wrong
+  places. Read the goal holbuild prints first, or select and name things by
+  pattern: `>~ [`fsem relI (f_chop f1 f2)`]` picks the goal and renames its
+  variables, `qmatch_goalsub_rename_tac` names subterms of the goal.
+- Do not rewrite with `GSYM LIST_TO_SET_EQ_EMPTY` in `fs`: it loops. To show
+  `l = []` from facts about `set l`, use `Cases_on `l`` and `EXTENSION`.
