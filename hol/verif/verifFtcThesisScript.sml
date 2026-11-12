@@ -9,33 +9,8 @@ Ancestors
   verifNorm verifTc verifPred
 
 (* ------------------------------------------------------------------------ *)
-(* Definitions 4.20, 4.23 and 4.26 as in the thesis                         *)
+(* Definitions 4.23 and 4.26 as in the thesis                               *)
 (* ------------------------------------------------------------------------ *)
-
-(* expand(phi). The thesis asks for a fresh X'; the formula mu X'. (true \/
-   true^X') is closed, so any name will do. *)
-Definition expand_def:
-  (expand (f_state p) =
-     f_or (f_state p)
-          (f_chop (f_state p)
-                  (f_mu "X'" (f_or (f_state (p_b b_true))
-                                   (f_chop (f_state (p_b b_true))
-                                           (f_recvar "X'")))))) /\
-  (expand (f_and f1 f2) = f_and (expand f1) (expand f2)) /\
-  (expand (f_or f1 f2) = f_or (expand f1) (expand f2)) /\
-  (expand (f_chop f1 f2) = f_chop (expand f1) (expand f2)) /\
-  (expand (f_mu X f) = f_mu X (expand f)) /\
-  (expand f = f)
-End
-
-(* a weight under which re-grouping a chop to the right decreases *)
-Definition chopw_def:
-  (chopw (f_chop f1 f2) = 2 * chopw f1 + chopw f2 + 1) /\
-  (chopw (f_and f1 f2) = chopw f1 + chopw f2 + 1) /\
-  (chopw (f_or f1 f2) = chopw f1 + chopw f2 + 1) /\
-  (chopw (f_mu X f) = chopw f + 1) /\
-  (chopw _ = 1:num)
-End
 
 (* distr(phi) of Definition 4.23, with the case for conjunction, reading
    phi1^phi2^phi3 as phi1^(phi2^phi3) *)

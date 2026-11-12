@@ -120,7 +120,9 @@ of `S`, a trace whose effective trace satisfies the finite-trace calculus
 state sequences `num -> state`; the first-order logic of Section 4.1 is not
 formalized. Several thesis definitions are corrected, and counterexamples
 show why; in particular, Theorem 4.29 and Lemma 4.30 fail with the thesis's
-`distr`, which distributes chop over conjunction. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
+`distr`, which distributes chop over conjunction. Examples of the thesis,
+among them the motivating Example 3.1 and Examples 4.31 and 4.32, are
+verified with the corrected definitions. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
 table maps its numbered items to HOL4 names.
 
 | Note | HOL4 name | Theory |
@@ -139,15 +141,21 @@ table maps its numbered items to HOL4 names.
 | Definition 5.1 (thesis Def 4.17) | `pred` | `verifPred` |
 | Lemma 5.2 (thesis Lemma 4.19) | `pred_sound` | `verifPred` |
 | Proposition 5.3 (thesis Lemma 2.22, 4.24 fail for ∧) | `distr_and_counterexample` | `verifCounterexamples` |
-| Definition 5.4 (thesis Def 4.23, corrected) | `distr` | `verifPred` |
-| Lemma 5.5 (thesis Lemma 4.24) | `distr_sem`, `fv_f_distr` | `verifPred` |
+| Definition 5.4 (thesis Def 4.20) | `expand` | `verifPred` |
+| Lemma 5.5 (thesis Lemma 4.21) | `expand_sem`, `fv_f_expand` | `verifPred` |
+| Definition 5.6 (thesis Def 4.23, corrected) | `distr`, `chopd` | `verifPred` |
+| Lemma 5.7 (thesis Lemma 4.24) | `distr_sem`, `fv_f_distr` | `verifPred` |
 | Definition 6.1 (thesis Def 4.28) | `ftc`, `ftc0` | `verifFtc` |
 | Theorem 6.2 (thesis Theorem 4.29) | `ftc_sound` (via `ftc_claim_all`, `ftc0_sound`, `good`) | `verifFtc` |
 | Lemma 6.3 (first call) | `side_condition_sound` | `verifFtc` |
 | Theorem 6.4 (thesis Lemma 4.30) | `vc_sound`; thesis version `vc_sound_nf` | `verifFtc` |
-| Definition 7.1 (thesis Def 4.20, 4.23, 4.26 as stated) | `expand`, `distr_thesis`, `normalised`, `ftc_thesis` | `verifFtcThesis` |
+| Definition 7.1 (thesis Def 4.23, 4.26 as stated) | `distr_thesis`, `normalised`, `ftc_thesis` | `verifFtcThesis` |
 | Theorem 7.2 (thesis Theorem 4.29, Lemma 4.30 fail with thesis `distr`) | `phi0_empty`, `ftc_thesis_unsound`, `vc_thesis_unsound` | `verifFtcThesis` |
-| Chop lemmas | `IN_chop`, `chop_assoc`, `chop_union_l`, `chop_restrict_l`, `chop_dup_l` | `verifChop` |
+| Lemma 8.1 (conformance of `m`) | `m_call_inv`, `m_conforms` | `verifExamples` |
+| Theorem 8.2 (thesis Example 3.1) | `ex31_vc`, `ex31`, `ex31_nonvacuous` | `verifExamples` |
+| Theorem 8.3 (thesis Examples 4.31, 4.32) | `ex431_vc`, `ex431`, `ex432_weak_fails`, `ex432_vc`, `ex432` | `verifExamples` |
+| Proposition 8.4 (thesis Examples 4.12, 4.15, 4.18, 4.25) | `ex412`, `ex415`, `ex418`, `ex425` | `verifExamples` |
+| Chop lemmas | `IN_chop`, `chop_assoc`, `chop_union_l`, `chop_union_r`, `chop_restrict_l`, `chop_dup_l` | `verifChop` |
 
 ## Deviations from the paper
 

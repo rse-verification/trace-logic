@@ -76,8 +76,10 @@ encodes the specification $\phi$. The formalization covers
 \item \Th{Theorem~4.29}: a trace whose effective trace satisfies
   $\ftc(S, \phi)$ is in $\fsem{\phi}$;
 \item \Th{Lemma~4.30}: validity of $\tc(S) \Rightarrow \ftc(S, \phi)$
-  implies $\Str\sem{S} \subseteq \fsem{\phi}$.
+  implies $\Str\sem{S} \subseteq \fsem{\phi}$;
 \end{itemize}
+and examples of the thesis that check that the definitions and results
+apply as intended (Section~\ref{sec:examples}).
 It is built on the formalization of the paper by Gurov and
 H\"ahnle~\cite{GH}, whose language, semantics and trace logic the thesis
 uses (\Th{Chapter~2}). The note on that formalization describes its
@@ -111,8 +113,15 @@ proofs as stated; with the definitions as stated, \Th{Lemma~4.16},
   Proposition~\ref{prop:distr}). The proof of \Th{Theorem~4.29} uses
   \Th{Lemma~4.24} for formulas $(\mu X.\psi)\chop\phi_2$, and with the
   thesis's $\distr$, \Th{Theorem~4.29} and \Th{Lemma~4.30} fail
-  (Theorem~\ref{thm:ftc-thesis}). The formalization distributes chop over
-  disjunction only.
+  (Theorem~\ref{thm:ftc-thesis}). The formalization does not distribute
+  chop over conjunction (Definition~\ref{def:distr}).
+\item \emph{Distribution and grouping of chops.} The thesis writes chop
+  sequences without brackets, and \Th{Example~4.25} regroups them
+  implicitly. \Th{Examples~4.31 and~4.32} moreover need chop distributed
+  over disjunction on the right, which \Th{Definition~4.23} does not do:
+  as stated, the case for a call in \Th{Definition~4.28} does not apply
+  to them. The corrected $\distr$ does both, and the formalization verifies
+  these examples (Theorem~\ref{thm:ex431}).
 \item \emph{Partial functions.} $\pred$ and $\ftc$
   (\Th{Definitions~4.17 and~4.28}) need not terminate. The formalization
   gives them fuel and makes them false when it runs out. Theorem~4.29 then
@@ -349,18 +358,52 @@ $(\mu X.\psi)\chop\phi_2$, and that step is not valid for conjunctions.
 Section~\ref{sec:distr-thesis} shows that \Th{Theorem~4.29} indeed fails
 with the thesis's $\distr$.
 
-\begin{definition}[corrected \Th{Definition~4.23}]
-  $\distr$ is defined as in \Th{Definition~4.23}, without the case for
-  conjunction: $\distr((\psi_1 \lor \psi_2)\chop\phi_2) =
-  \distr(\psi_1\chop\phi_2) \lor \distr(\psi_2\chop\phi_2)$, and
-  $\distr$ is applied to the subformulas otherwise.
+\begin{definition}[\Th{Definition~4.20}]\label{def:expand}
+  $\mathrm{expand}(\phi)$ is defined as in \Th{Definition~4.20}. Since
+  $\mu X'.(\mathit{true} \lor \mathit{true}\chop X')$ is closed, the name
+  $X'$ need not be fresh.
 \end{definition}
+
+\begin{lemma}[\Th{Lemma~4.21}]
+  $\fsem{\mathrm{expand}(\phi)}_V = \fsem{\phi}_V$ for every $\phi$ and
+  every valuation $V$. Moreover, $\mathrm{expand}(\phi)$ has the same free
+  variables as $\phi$.
+\end{lemma}
+
+\begin{definition}[corrected \Th{Definition~4.23}]\label{def:distr}
+  $\distr(\phi)$ is defined by
+  \begin{align*}
+    \distr((\psi_1 \lor \psi_2)\chop\phi_2) &=
+      \distr(\psi_1\chop\phi_2) \lor \distr(\psi_2\chop\phi_2)\\
+    \distr((\phi_1\chop\phi_2)\chop\phi_3) &=
+      \distr(\phi_1\chop(\phi_2\chop\phi_3))\\
+    \distr(\phi_1\chop\phi_2) &= \distr(\phi_1) \chop_d \distr(\phi_2)
+      \quad\text{otherwise}
+  \end{align*}
+  and by applying $\distr$ to the subformulas of other formulas, where
+  $\phi_1 \chop_d (\psi_1 \lor \psi_2) = (\phi_1\chop_d\psi_1) \lor
+  (\phi_1\chop_d\psi_2)$ and $\phi_1 \chop_d \phi_2 = \phi_1\chop\phi_2$
+  otherwise.
+\end{definition}
+
+Compared to the thesis, the case for conjunction is dropped. The second
+equation makes explicit the regrouping of \Th{Example~4.25}, and
+$\chop_d$ distributes chop over disjunction on the right, which
+\Th{Examples~4.31 and~4.32} need (Section~\ref{sec:examples}). Without the
+regrouping, $\distr$ leaves left-nested chops, for example from
+$\mathrm{expand}$, and $\ftc$ is false on them, because $\pred$ is false on
+a chop.
 
 \begin{lemma}[\Th{Lemma~4.24}]
   $\fsem{\distr(\phi)}_V = \fsem{\phi}_V$ for every $\phi$ and every
   valuation $V$. Moreover, $\distr(\phi)$ has the same free variables as
   $\phi$.
 \end{lemma}
+
+The proof uses that chop is associative and distributes over union on
+both sides. Together with \Th{Lemma~4.21}, this gives
+\Th{Proposition~4.27}: $\fsem{\distr(\mathrm{expand}(\phi))} =
+\fsem{\phi}$.
 
 \section{The finite-trace calculus}
 
@@ -461,18 +504,17 @@ $(\Id\chop\Sb{x+1}{x}) \lor (\Id\chop\Sb{x-1}{x}\chop\Sb{x+1}{x})$, read as
 a flat sequence. HOL4 formulas are trees, so the formalization makes the
 regrouping explicit.
 
-\begin{definition}[\Th{Definitions~4.20, 4.23 and~4.26}]
+\begin{definition}[\Th{Definitions~4.23 and~4.26}]
   \label{def:distr-thesis}
-  $\mathrm{expand}(\phi)$ is defined as in \Th{Definition~4.20}; since
-  $\mu X'.(\mathit{true} \lor \mathit{true}\chop X')$ is closed, the
-  name $X'$ need not be fresh. $\distr_{\mathrm{FS}}(\phi)$ is defined as
+  $\distr_{\mathrm{FS}}(\phi)$ is defined as
   in \Th{Definition~4.23}, with the case for conjunction, plus the case
   \[
     \distr_{\mathrm{FS}}((\phi_1\chop\phi_2)\chop\phi_3) =
     \distr_{\mathrm{FS}}(\phi_1\chop(\phi_2\chop\phi_3)).
   \]
   A formula $\phi$ is \emph{normalised} if $\phi =
-  \distr_{\mathrm{FS}}(\mathrm{expand}(\phi_0))$ for some $\phi_0$.
+  \distr_{\mathrm{FS}}(\mathrm{expand}(\phi_0))$ for some $\phi_0$
+  (Definition~\ref{def:expand}).
   $\ftc_{\mathrm{FS}}$ is $\ftc$ (Definition~\ref{def:ftc}) with
   $\distr_{\mathrm{FS}}$ in place of $\distr$.
 \end{definition}
@@ -519,21 +561,115 @@ Without the regrouping, $\distr$ gives the second conjunct as
 $(\Id\chop\Id)\chop E$, and $\ftc$ is false on it, because $\pred$ is false
 on a chop. We expect that $\ftc$ with $\distr$ read this way is sound: then
 $\ftc$ splits both conjuncts at the same statement boundaries. This is not
-formalized. Conversely, the regrouping case can be added to the corrected
-$\distr$ (disjunction only) without harm: the proof of
-Theorem~\ref{thm:ftc} uses only that $\distr$ preserves the semantics and
-closedness. The formalization omits it, so its $\ftc$ is false on
-left-nested chops such as the result of \Th{Example~4.25}; this affects
-completeness, not soundness.
+formalized. Without the regrouping, however, $\ftc$ cannot handle
+normalised formulas such as those of \Th{Examples~4.31 and~4.32}.
+
+\section{Examples}\label{sec:examples}
+
+The examples check that the corrected definitions apply as the thesis
+intends, and that the results are not vacuous. Chop sequences are
+bracketed to the right. In \Th{Examples~3.1, 4.31 and~4.32}, the
+procedure table is
+\[
+  T = m\{\ite{x \le 0}{x := 0}{(x := x - 1; \call{m})}\},
+\]
+and the precondition $\Pre_m$ is $\mathit{true}$.
+
+\begin{lemma}\label{lem:m-conf}
+  Every $\sigma \in \Str\sem{\call{m}}$ ends in a state where $x = 0$ and
+  every other variable has its value in the first state. Hence $m$
+  conforms with every contract whose postcondition follows from this.
+\end{lemma}
+
+The proof shows that the set of such traces is a pre-fixed point of the
+transformer whose least fixed point interprets the procedures. The thesis
+justifies conformance informally; its procedure contract condition is not
+formalized.
+
+\begin{theorem}[\Th{Example~3.1}]\label{thm:ex31}
+  Let $S = y := x; \call{m}; y := y - x$ and $\Post_m = (x = 0 \land y =
+  y_0)$, and let
+  \[
+    \phi = \Sb{x}{y}\chop\Id\chop(\mu X_m.\,\psi)\chop\Id, \qquad
+    \psi = \Id\chop(\Sb{0}{x} \lor \Sb{x-1}{x}\chop\Id\chop X_m).
+  \]
+  Then $\tc_1(S) \Rightarrow \ftc^{20}_1(S, \phi, [\,])$ is valid, and
+  hence $\Str\sem{S} \subseteq \fsem{\phi}$ by Theorem~\ref{thm:vc}.
+  Moreover, $s^6 \in \Str\sem{S}$ for the state $s$ that maps every
+  variable to $0$, and some trace of $y := x; \call{m}; y := y + 1$ is not
+  in $\fsem{\phi}$.
+\end{theorem}
+
+$\ftc$ follows the shape of $S$. The call matches $\Id\chop\mu X_m.\psi$,
+and the side condition checks $S_m$ against $\psi[\mu X_m.\psi/X_m]$, in
+which the recursive call is discharged because $(m, \psi) \in X$. The
+trace of the variant is not in $\fsem{\phi}$ because every trace in
+$\fsem{\phi}$ ends with two equal states.
+
+\Th{Examples~4.31 and~4.32} use the specification
+\[
+  \phi' = \mathit{true}\chop(\mu X_m.\,\mathit{true}\chop(\Sb{0}{x} \lor
+  X_m))\chop\Id,
+\]
+whose state formulas stand for any number of steps. $\ftc$ matches a state
+formula with exactly one step, so $\phi'$ must be normalised as
+$\distr(\mathrm{expand}(\phi'))$. After unfolding the fixed point, the
+recursion variable for the call sits in the disjunction $\Sb{0}{x} \lor
+X_m$ on the right of a chop, and the case for a call needs
+$\phi_1\chop\mu X_m.\psi$. The thesis's computation of $\ftc(S, \phi)$ in
+\Th{Example~4.31} is approximate and skips this step; the corrected
+$\distr$ (Definition~\ref{def:distr}) makes it.
+
+\begin{theorem}[\Th{Examples~4.31 and~4.32}]\label{thm:ex431}
+  Let $\phi = \distr(\mathrm{expand}(\phi'))$.
+  \begin{itemize}
+  \item Let $S$ be as in Theorem~\ref{thm:ex31} and $\Post_m = (x = 0)$.
+    Then $\tc_1(S) \Rightarrow \ftc^{30}_1(S, \phi, [\,])$ is valid, and
+    hence $\Str\sem{S} \subseteq \fsem{\phi'}$.
+  \item Let $S' = x := -x; z := 0; y := x; \call{m}; y := y - (x + z)$.
+    With $\Post_m = (x = 0)$, some $g$ satisfies $\tc_1(S')$ but not
+    $\ftc^n_1(S', \phi, [\,])$, for every $n$. With $\Post_m = (x = 0
+    \land z = z_0)$, $\tc_1(S') \Rightarrow \ftc^{30}_1(S', \phi, [\,])$ is
+    valid, and hence $\Str\sem{S'} \subseteq \fsem{\phi'}$.
+  \end{itemize}
+\end{theorem}
+
+The conclusions use $\fsem{\phi} = \fsem{\phi'}$
+(\Th{Proposition~4.27}). The failure for the weaker contract holds for
+every fuel, so it is not an artifact of fuel: after the call, the
+contract does not constrain $z$, which the last assignment needs. $S'$
+satisfies $\phi'$ nonetheless, as the stronger contract shows.
+
+\begin{proposition}[\Th{Examples~4.12, 4.15, 4.18 and~4.25}]
+  \label{prop:ex-aux}\leavevmode
+  \begin{itemize}
+  \item \Th{Example~4.12}: for $S = (\ite{x = 0}{x := 1}{((\ite{x <
+    0}{\skipS}{x := -x}); \skipS)}); x := x + 1$, $\norm(S)$ is the
+    statement $S'$ of the thesis, and it is in normal form.
+  \item \Th{Example~4.15}: for $S = (\ite{y = 0}{x := 1}{\skipS}); x :=
+    2$, every $g$ that satisfies $\tc_1(S)$ has $g(1)(y) \neq 0$ and
+    $g(1)(x) = 2$, while some $g$ with $g(1)(y) = 0$ satisfies
+    $\tc_1(\norm(S))$.
+  \item \Th{Example~4.18}: for $\phi = \mu X.\,\Id\chop X \lor ((x = 10)
+    \land \Sb{x+1}{x})$, $\pred^1_i(\phi)$ holds iff $g(i)(x) = 10$ and
+    $g(i+1) = g(i)[x \mapsto g(i)(x) + 1]$, and the trace
+    $[x \mapsto 10]\,[x \mapsto 11]$ is in $\fsem{\phi}$.
+  \item \Th{Example~4.25}: $\distr((\Id \lor \Id\chop\Sb{x-1}{x})\chop
+    \Sb{x+1}{x}) = \Id\chop\Sb{x+1}{x} \lor
+    \Id\chop(\Sb{x-1}{x}\chop\Sb{x+1}{x})$.
+  \end{itemize}
+\end{proposition}
+
+The thesis says that $\tc(S)$ of \Th{Example~4.15} is unsatisfiable
+regardless of $y$; it is satisfiable when $y \neq 0$ and $x = 2$
+initially.
 
 \section{What is not formalized}
 
 The formalization stops at \Th{Lemma~4.30}. Not formalized are the
-first-order logic of \Th{Section~4.1}, \Th{Lemma~4.21} and
-\Th{Proposition~4.27} (not needed for soundness; $\mathrm{expand}$ is
-defined only for Section~\ref{sec:distr-thesis}), the
-procedure contract condition and \Th{Lemmas~4.35 and~4.36}, and the
-examples.
+first-order logic of \Th{Section~4.1}, the procedure contract condition
+and \Th{Lemmas~4.35 and~4.36}, and the examples of the thesis not listed
+in Section~\ref{sec:examples}.
 
 \begin{thebibliography}{GH}
 \bibitem[GH]{GH} D.~Gurov and R.~H\"ahnle. \emph{An Expressive Trace Logic

@@ -51,6 +51,12 @@ Proof
   rw[chop_def, EXTENSION] >> metis_tac[]
 QED
 
+Theorem chop_union_r:
+  !A B C. chop A (B UNION C) = chop A B UNION chop A C
+Proof
+  rw[chop_def, EXTENSION] >> metis_tac[]
+QED
+
 Theorem chop_restrict_l:
   !b A C. chop (restrict b A) C = restrict b (chop A C)
 Proof
