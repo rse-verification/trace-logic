@@ -119,7 +119,8 @@ of `S`, a trace whose effective trace satisfies the finite-trace calculus
 `Str[[S]] ⊆ ||φ||`. The encodings are embedded shallowly, as predicates on
 state sequences `num -> state`; the first-order logic of Section 4.1 is not
 formalized. Several thesis definitions are corrected, and counterexamples
-show why. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
+show why; in particular, Theorem 4.29 and Lemma 4.30 fail with the thesis's
+`distr`, which distributes chop over conjunction. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
 table maps its numbered items to HOL4 names.
 
 | Note | HOL4 name | Theory |
@@ -144,6 +145,8 @@ table maps its numbered items to HOL4 names.
 | Theorem 6.2 (thesis Theorem 4.29) | `ftc_sound` (via `ftc_claim_all`, `ftc0_sound`, `good`) | `verifFtc` |
 | Lemma 6.3 (first call) | `side_condition_sound` | `verifFtc` |
 | Theorem 6.4 (thesis Lemma 4.30) | `vc_sound`; thesis version `vc_sound_nf` | `verifFtc` |
+| Definition 7.1 (thesis Def 4.20, 4.23, 4.26 as stated) | `expand`, `distr_thesis`, `normalised`, `ftc_thesis` | `verifFtcThesis` |
+| Theorem 7.2 (thesis Theorem 4.29, Lemma 4.30 fail with thesis `distr`) | `phi0_empty`, `ftc_thesis_unsound`, `vc_thesis_unsound` | `verifFtcThesis` |
 | Chop lemmas | `IN_chop`, `chop_assoc`, `chop_union_l`, `chop_restrict_l`, `chop_dup_l` | `verifChop` |
 
 ## Deviations from the paper

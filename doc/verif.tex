@@ -84,7 +84,8 @@ uses (\Th{Chapter~2}). The note on that formalization describes its
 conventions; this note relies on them.
 
 The results hold, but several definitions of the thesis do not support its
-proofs as stated. The noteworthy changes are:
+proofs as stated; with the definitions as stated, \Th{Lemma~4.16},
+\Th{Theorem~4.29} and \Th{Lemma~4.30} fail. The noteworthy changes are:
 \begin{itemize}
 \item \emph{Effective traces.} \Th{Definition~4.8} abstracts only a
   procedure call at the top level of a statement, but the proofs treat every
@@ -108,8 +109,10 @@ proofs as stated. The noteworthy changes are:
   inclusion from left to right holds. Hence $\distr$ (\Th{Definition~4.23})
   does not preserve the semantics (\Th{Lemma~4.24} fails,
   Proposition~\ref{prop:distr}). The proof of \Th{Theorem~4.29} uses
-  \Th{Lemma~4.24} for formulas $(\mu X.\psi)\chop\phi_2$. The formalization
-  distributes chop over disjunction only.
+  \Th{Lemma~4.24} for formulas $(\mu X.\psi)\chop\phi_2$, and with the
+  thesis's $\distr$, \Th{Theorem~4.29} and \Th{Lemma~4.30} fail
+  (Theorem~\ref{thm:ftc-thesis}). The formalization distributes chop over
+  disjunction only.
 \item \emph{Partial functions.} $\pred$ and $\ftc$
   (\Th{Definitions~4.17 and~4.28}) need not terminate. The formalization
   gives them fuel and makes them false when it runs out. Theorem~4.29 then
@@ -341,9 +344,10 @@ different positions.
   semantics contains $s\,s\,s$.
 \end{proposition}
 
-We do not know whether \Th{Theorem~4.29} itself fails with the thesis's
-$\distr$. Its proof uses \Th{Lemma~4.24} in the case for
+The proof of \Th{Theorem~4.29} uses \Th{Lemma~4.24} in the case for
 $(\mu X.\psi)\chop\phi_2$, and that step is not valid for conjunctions.
+Section~\ref{sec:distr-thesis} shows that \Th{Theorem~4.29} indeed fails
+with the thesis's $\distr$.
 
 \begin{definition}[corrected \Th{Definition~4.23}]
   $\distr$ is defined as in \Th{Definition~4.23}, without the case for
@@ -445,11 +449,89 @@ formalization also proves the thesis's version, for $S$ and the procedure
 bodies already in normal form, with $\tc_1(S) \Rightarrow
 \ftc^n_1(S, \phi, [\,])$.
 
+\section{The thesis's distribution function}\label{sec:distr-thesis}
+
+This section shows that \Th{Theorem~4.29} and \Th{Lemma~4.30} fail when
+$\ftc$ uses $\distr$ as in \Th{Definition~4.23}, which also distributes
+chop over conjunction.
+
+The thesis writes chop sequences without brackets: in \Th{Example~4.25},
+$\distr((\Id \lor \Id\chop\Sb{x-1}{x})\chop\Sb{x+1}{x})$ is
+$(\Id\chop\Sb{x+1}{x}) \lor (\Id\chop\Sb{x-1}{x}\chop\Sb{x+1}{x})$, read as
+a flat sequence. HOL4 formulas are trees, so the formalization makes the
+regrouping explicit.
+
+\begin{definition}[\Th{Definitions~4.20, 4.23 and~4.26}]
+  \label{def:distr-thesis}
+  $\mathrm{expand}(\phi)$ is defined as in \Th{Definition~4.20}; since
+  $\mu X'.(\mathit{true} \lor \mathit{true}\chop X')$ is closed, the
+  name $X'$ need not be fresh. $\distr_{\mathrm{FS}}(\phi)$ is defined as
+  in \Th{Definition~4.23}, with the case for conjunction, plus the case
+  \[
+    \distr_{\mathrm{FS}}((\phi_1\chop\phi_2)\chop\phi_3) =
+    \distr_{\mathrm{FS}}(\phi_1\chop(\phi_2\chop\phi_3)).
+  \]
+  A formula $\phi$ is \emph{normalised} if $\phi =
+  \distr_{\mathrm{FS}}(\mathrm{expand}(\phi_0))$ for some $\phi_0$.
+  $\ftc_{\mathrm{FS}}$ is $\ftc$ (Definition~\ref{def:ftc}) with
+  $\distr_{\mathrm{FS}}$ in place of $\distr$.
+\end{definition}
+
+The added case preserves the semantics, since chop is associative, and it
+only applies to a chop whose left operand is a chop. Let
+$E = \mathrm{expand}(\mathit{true}) = \mathit{true} \lor
+\mathit{true}\chop\mu X'.(\mathit{true} \lor \mathit{true}\chop X')$, so
+$E$ describes the remaining statements of any length.
+
+\begin{theorem}\label{thm:ftc-thesis}
+  Let $T$ be empty, let $\Pre$ and $\Post$ be $\mathit{true}$, let
+  $S = \skipS; (\skipS; \skipS)$, and let
+  $\phi = \distr_{\mathrm{FS}}(\mathrm{expand}((\mu Y.\,\Id \land
+  \Id\chop\Id)\chop\mathit{true})) = (\mu Y.\,\Id \land \Id\chop\Id)\chop E$.
+  Then $\phi$ is closed and normalised, and $\fsem{\phi} = \emptyset$, but
+  every $g$ that satisfies $\tc_1(S)$ satisfies
+  $\ftc_{\mathrm{FS},1}^{10}(S, \phi, [\,])$. Hence
+  \begin{itemize}
+  \item \Th{Theorem~4.29} fails for $\ftc_{\mathrm{FS}}$: for a state $s$,
+    $s\,s\,s\,s \eff_S s\,s\,s\,s$, and the constant sequence $g = s$
+    satisfies $\ftc_{\mathrm{FS},1}^{10}(S, \phi, [\,])$, but
+    $s\,s\,s\,s \notin \fsem{\phi}$;
+  \item \Th{Lemma~4.30} fails for $\ftc_{\mathrm{FS}}$:
+    $\tc_1(S) \Rightarrow \ftc_{\mathrm{FS},1}^{10}(S, \phi, [\,])$ is
+    valid, but $s\,s\,s\,s \in \Str\sem{S} \setminus \fsem{\phi}$.
+  \end{itemize}
+\end{theorem}
+
+The formula $\Id \land \Id\chop\Id$ has no traces, since $\Id$ has traces
+of length~2 only and $\Id\chop\Id$ of length~3 only. $\ftc$ unfolds the
+fixed point and distributes:
+\[
+  \distr_{\mathrm{FS}}((\Id \land \Id\chop\Id)\chop E) =
+  (\Id\chop E) \land (\Id\chop(\Id\chop E)).
+\]
+It then checks the conjuncts separately. The first matches $\Id$ with the
+first $\skipS$ and $E$ with the other two; the second matches
+$\Id\chop\Id$ with the first two. The trace $s\,s\,s\,s$ is in both
+conjuncts, but they split it at different positions, so it is not in
+$(\Id \land \Id\chop\Id)\chop E$.
+
+Without the regrouping, $\distr$ gives the second conjunct as
+$(\Id\chop\Id)\chop E$, and $\ftc$ is false on it, because $\pred$ is false
+on a chop. We expect that $\ftc$ with $\distr$ read this way is sound: then
+$\ftc$ splits both conjuncts at the same statement boundaries. This is not
+formalized. Conversely, the regrouping case can be added to the corrected
+$\distr$ (disjunction only) without harm: the proof of
+Theorem~\ref{thm:ftc} uses only that $\distr$ preserves the semantics and
+closedness. The formalization omits it, so its $\ftc$ is false on
+left-nested chops such as the result of \Th{Example~4.25}; this affects
+completeness, not soundness.
+
 \section{What is not formalized}
 
 The formalization stops at \Th{Lemma~4.30}. Not formalized are the
-first-order logic of \Th{Section~4.1}, the function $\mathrm{expand}$ and
-\Th{Lemma~4.21} and \Th{Proposition~4.27} (not needed for soundness), the
+first-order logic of \Th{Section~4.1}, \Th{Lemma~4.21} and
+\Th{Proposition~4.27} (not needed for soundness; $\mathrm{expand}$ is
+defined only for Section~\ref{sec:distr-thesis}), the
 procedure contract condition and \Th{Lemmas~4.35 and~4.36}, and the
 examples.
 
