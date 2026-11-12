@@ -12,6 +12,9 @@ doc/ott-rules.tex: ott/traces.ott
 doc/note.pdf: doc/note.tex doc/ott-rules.tex
 	cd doc && pdflatex -interaction=nonstopmode note.tex && pdflatex -interaction=nonstopmode note.tex
 
+doc/verif.pdf: doc/verif.tex
+	cd doc && pdflatex -interaction=nonstopmode verif.tex && pdflatex -interaction=nonstopmode verif.tex
+
 build: hol/tracesScript.sml
 	holbuild build
 

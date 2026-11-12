@@ -1,0 +1,465 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2.8cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{stmaryrd}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\title{A Formalization of the Finite-Trace Calculus of
+  ``Automated Verification of Finite-trace Properties for Recursive
+  Programs''\\[0.3em]
+  \large How the formalization differs from the thesis}
+\author{}
+\date{}
+
+% ---------------------------------------------------------------------------
+% Notation
+
+\newcommand{\sem}[1]{[\![ #1 ]\!]}
+\newcommand{\fsem}[1]{|\!|#1|\!|}
+\newcommand{\Str}{{\mathcal{S}_{\mathit{tr}}}}
+\newcommand{\Seff}{{\mathcal{S}_{\mathit{eff}}}}
+\newcommand{\chop}{\smallfrown}
+\newcommand{\Id}{\mathsf{Id}}
+\newcommand{\Sb}[2]{\mathsf{Sb}^{#1}_{#2}}
+\newcommand{\dup}{\sharp}
+\newcommand{\State}{\mathit{State}}
+\newcommand{\kw}[1]{\mathbf{#1}}
+\newcommand{\skipS}{\kw{skip}}
+\newcommand{\ite}[3]{\kw{if}\ #1\ \kw{then}\ #2\ \kw{else}\ #3}
+\newcommand{\call}[1]{#1()}
+\newcommand{\Tr}{\State^{*}}
+\newcommand{\Pre}{\mathit{Pre}}
+\newcommand{\Post}{\mathit{Post}}
+\newcommand{\tc}{\mathrm{tc}}
+\newcommand{\ftc}{\mathrm{ftc}}
+\newcommand{\pred}{\mathrm{pred}}
+\newcommand{\distr}{\mathrm{distr}}
+\newcommand{\norm}{\mathrm{norm}}
+\newcommand{\seqn}{\mathrm{seqn}}
+\newcommand{\first}{\mathrm{first}}
+\newcommand{\last}{\mathrm{last}}
+\newcommand{\tl}{\mathrm{tail}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\eff}{\rhd}
+% A numbered item of the thesis [FS], e.g. \Th{Definition~4.8}.
+\newcommand{\Th}[1]{#1 of FS}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This note accompanies a HOL4 formalization of the soundness results of
+Chapter~4 of the master's thesis \emph{Automated Verification of
+Finite-trace Properties for Recursive Programs} by
+Stevanovic~\cite{FS} (henceforth FS). The thesis reduces the verification
+of a Rec program against a trace formula to a validity problem: the trace
+constraints $\tc(S)$ describe the traces of $S$, with procedure calls
+abstracted by contracts, and the finite-trace calculus $\ftc(S, \phi)$
+encodes the specification $\phi$. The formalization covers
+\begin{itemize}
+\item \Th{Lemma~4.16}: every effective trace satisfies the trace
+  constraints;
+\item \Th{Theorem~4.29}: a trace whose effective trace satisfies
+  $\ftc(S, \phi)$ is in $\fsem{\phi}$;
+\item \Th{Lemma~4.30}: validity of $\tc(S) \Rightarrow \ftc(S, \phi)$
+  implies $\Str\sem{S} \subseteq \fsem{\phi}$.
+\end{itemize}
+It is built on the formalization of the paper by Gurov and
+H\"ahnle~\cite{GH}, whose language, semantics and trace logic the thesis
+uses (\Th{Chapter~2}). The note on that formalization describes its
+conventions; this note relies on them.
+
+The results hold, but several definitions of the thesis do not support its
+proofs as stated. The noteworthy changes are:
+\begin{itemize}
+\item \emph{Effective traces.} \Th{Definition~4.8} abstracts only a
+  procedure call at the top level of a statement, but the proofs treat every
+  call of the statement this way. With the definition as stated,
+  \Th{Lemma~4.16} fails (Proposition~\ref{prop:seff}). The formalization
+  defines effective traces compositionally, as a relation between a trace
+  and its effective trace (Definition~\ref{def:eff}). This also makes the
+  bijection of \Th{Lemma~4.9}, and the determinism of Rec that it relies
+  on, unnecessary.
+\item \emph{Normal form of statements.} The shape condition that
+  \Th{Lemma~4.16} assumes (no conditional as the left operand of a
+  sequence) is too weak, because $\tc$ re-associates sequences and can
+  create such a conditional (Proposition~\ref{prop:shape}). The
+  formalization requires a stronger normal form
+  (Definition~\ref{def:nf}) and normalizes statements and procedure bodies
+  with a corrected $\norm$ (Definition~\ref{def:norm}). As a result,
+  \Th{Lemma~4.30} holds for every statement without assumptions about its
+  shape (Theorem~\ref{thm:vc}).
+\item \emph{Chop and conjunction.} The second equation of \Th{Lemma~2.22},
+  $(A \cap B)\chop C = (A\chop C) \cap (B\chop C)$, is false; only the
+  inclusion from left to right holds. Hence $\distr$ (\Th{Definition~4.23})
+  does not preserve the semantics (\Th{Lemma~4.24} fails,
+  Proposition~\ref{prop:distr}). The proof of \Th{Theorem~4.29} uses
+  \Th{Lemma~4.24} for formulas $(\mu X.\psi)\chop\phi_2$. The formalization
+  distributes chop over disjunction only.
+\item \emph{Partial functions.} $\pred$ and $\ftc$
+  (\Th{Definitions~4.17 and~4.28}) need not terminate. The formalization
+  gives them fuel and makes them false when it runs out. Theorem~4.29 then
+  needs neither the hypothesis that $\ftc(S, \phi)$ is well-defined nor that
+  $\phi$ is normalised (Theorem~\ref{thm:ftc}). The function $\mathrm{expand}$
+  (\Th{Definition~4.20}) only matters for completeness and is not
+  formalized.
+\item \emph{Proof of \Th{Theorem~4.29}.} The case of a recursive call
+  relies on a side condition generated earlier in the recursion. The
+  formalization makes this precise with an invariant on the set $X$ of
+  side conditions, and proves the case of a first call by an inner
+  induction on the length of the traces of the procedure body
+  (Lemma~\ref{lem:side}).
+\end{itemize}
+The first-order logic of \Th{Section~4.1} is not formalized. The encodings
+are embedded shallowly, as predicates on state sequences
+(Section~\ref{sec:conv}).
+
+Each numbered definition and result in this note corresponds to a HOL4
+definition or theorem in the directory \texttt{hol/verif}. The file
+\texttt{README.md} lists them by the numbers used here. References such as
+``\Th{Definition~4.8}'' are to the thesis.
+
+\section{Conventions}\label{sec:conv}
+
+The language, the trace semantics $\Str$ and the semantics $\fsem{\phi}$ of
+trace formulas are those of the formalization of GH. In particular, states
+are total functions from variable names to integers, procedure tables are
+lists looked up by first match, and an undeclared procedure has no traces.
+Statement variables are not part of the thesis's language; they are
+interpreted by $\emptyset$, so they have no traces. Substitution
+$\phi[\psi/X]$ is plain substitution; all formulas below are closed when
+they are substituted, so this agrees with capture-avoiding substitution.
+As in GH's formalization, the recursion variable $X_m$ of a procedure $m$
+is the name $m$ itself.
+
+\paragraph{State sequences.} The thesis's formulas over state variables
+$s^{(1)}, s^{(2)}, \dots$ are embedded shallowly: a \emph{state sequence} is
+a function $g : \mathbb{N} \to \State$, with $g(i)$ in place of $s^{(i)}$,
+and an encoding is a predicate on state sequences. A trace
+$u = u_0 \cdots u_{k}$ is \emph{placed at $i$ in $g$} if $g(i+j) = u_j$ for
+all $j \leq k$; positions after the trace are arbitrary, which is the
+thesis's padding (\Th{Example~4.3}). The relations $\Id$ and $\Sb{a}{x}$ of
+\Th{Definition~4.1} become equalities of states,
+$g(i+1) = g(i)$ and $g(i+1) = g(i)[x \mapsto \A\sem{a}(g(i))]$, and
+$\B\sem{b}(s^{(i)})$ becomes $\B\sem{b}(g(i))$. Since states are total,
+this is the thesis's structure $M$ with all variables in $xs$. A link to a
+first-order logic with finitely many variables, as needed for SMT solving,
+is left for later.
+
+\section{Contracts and effective traces}
+
+\begin{definition}[\Th{Definitions~4.5 and~4.6}]
+  A contract assigns to each procedure $m$ a precondition
+  $\Pre_m \subseteq \State$ and a postcondition
+  $\Post_m \subseteq \State \times \State$. Every procedure
+  \emph{conforms} with its contract if $\Pre_m(\first\,\sigma)$ implies
+  $\Post_m(\first\,\sigma, \last\,\sigma)$ for every $m$ and every
+  $\sigma \in \Str\sem{\call{m}}$.
+\end{definition}
+
+\Th{Definition~4.8} sets
+$\Seff\sem{\call{m}} = \{s_1 s_2 s_n \mid s_1 s_2 \cdots s_n \in
+\Str\sem{\call{m}}\}$ and $\Seff\sem{S} = \Str\sem{S}$ for every other
+statement. A call inside a sequence or a conditional is therefore not
+abstracted. The proofs of \Th{Lemma~4.16 and Theorem~4.29} use effective
+traces in which every call of the statement is abstracted, as in the
+proof of \Th{Lemma~4.16} for $\call{m}; S_2$. With the definition as
+stated, the lemma fails.
+
+\begin{proposition}\label{prop:seff}
+  Let $T = \{m\{x := 1; x := 2\}\}$ with the contract
+  $\langle \mathit{true},\ x = 2\rangle$, which $m$ conforms with. Let
+  $S = \skipS; \call{m}$, let $s$ be the state that maps every variable
+  to $0$, and let $s_1 = s[x \mapsto 1]$ and $s_2 = s_1[x \mapsto 2]$. Then
+  $u = s\,s\,s\,s_1\,s_2 \in \Seff\sem{S}$ as in \Th{Definition~4.8},
+  but if $u$ is placed at $1$ in $g$, then $g$ does not satisfy $\tc_1(S)$:
+  the conjunct $\Post_m(g(3), g(4))$ requires $g(4)(x) = 2$, but
+  $g(4) = s_1$.
+\end{proposition}
+
+The formalization relates each trace to its effective trace directly.
+
+\begin{definition}[Effective traces, corrected \Th{Definition~4.8}]
+  \label{def:eff}
+  The relation $\sigma \eff_S \tau$ ($\tau$ is an effective trace of the
+  trace $\sigma$ of $S$) is defined inductively:
+  \begin{gather*}
+    s\,s \eff_{\skipS} s\,s \qquad
+    s\,s' \eff_{x := a} s\,s' \text{ where } s' = s[x \mapsto \A\sem{a}(s)]
+    \qquad
+    \frac{\sigma \in \Str\sem{\call{m}}}
+         {\sigma \eff_{\call{m}} \first\,\sigma\ \first\,\sigma\ \last\,\sigma}
+    \\[0.5em]
+    \frac{\sigma_1 \eff_{S_1} \tau_1 \quad \sigma_2 \eff_{S_2} \tau_2 \quad
+          \last\,\sigma_1 = \first\,\sigma_2}
+         {\sigma_1 \cdot \tl\,\sigma_2 \eff_{S_1; S_2}
+          \tau_1 \cdot \tl\,\tau_2}
+    \\[0.5em]
+    \frac{\B\sem{b}(s) \quad s\,\sigma \eff_{S_1} s\,\tau}
+         {s\,s\,\sigma \eff_{\ite{b}{S_1}{S_2}} s\,s\,\tau}
+    \qquad
+    \frac{\lnot\B\sem{b}(s) \quad s\,\sigma \eff_{S_2} s\,\tau}
+         {s\,s\,\sigma \eff_{\ite{b}{S_1}{S_2}} s\,s\,\tau}
+  \end{gather*}
+\end{definition}
+
+The body of a called procedure is not abstracted further, as in the
+thesis. If $\sigma \eff_S \tau$, then $\sigma \in \Str\sem{S}$, both traces
+have at least two states, and they have the same first and the same last
+state.
+
+\begin{lemma}[replaces \Th{Lemma~4.9}]\label{lem:eff-exists}
+  Every $\sigma \in \Str\sem{S}$ has an effective trace $\tau$ with
+  $\sigma \eff_S \tau$.
+\end{lemma}
+
+The proof is by induction on $S$. The bijection of \Th{Lemma~4.9} is not
+needed: Theorem~\ref{thm:ftc} is stated for a trace together with an
+effective trace of it, and its proof constructs the effective traces of
+subtraces from Lemma~\ref{lem:eff-exists} where they are needed. So the
+determinism of Rec is not used either.
+
+\section{Trace constraints}
+
+\begin{definition}[Normal form]\label{def:nf}
+  A statement is \emph{atomic} if it is $\skipS$, an assignment, a call or
+  a statement variable. A statement is in \emph{normal form} if the left
+  operand of each of its sequences is atomic.
+\end{definition}
+
+So in normal form, sequences are associated to the right and have no
+conditional as left operand.
+
+\begin{definition}[\Th{Definition~4.13}]
+  $\tc_i(S)$ is defined by the equations of \Th{Definition~4.13}, with
+  $\tc_i(Y) = \mathit{true}$ for a statement variable $Y$. In particular,
+  \[\tc_i((S_1; S_2); S_3) = \tc_i(S_1; (S_2; S_3)),\]
+  and
+  $\tc_i(S_1; S_2) = \tc_i(S_1) \land \tc_{i+1}(S_2)$ if $S_1$ is neither a
+  call nor a sequence.
+\end{definition}
+
+The re-association makes the recursion terminate under a weight in which
+the left operand of a sequence counts twice. The thesis assumes,
+without loss of generality, that no conditional is the left operand of a
+sequence (text after \Th{Lemma~4.11}), and that its $\norm$
+(\Th{Definition~4.33}) establishes this. But the case for $S_1 = S'_1;S'_2$
+re-associates, which can move a conditional to the left of a sequence.
+Then the index $i+1$ for $S_2$ is wrong.
+
+\begin{proposition}\label{prop:shape}
+  Let $S = (\skipS; \ite{\mathit{true}}{x := 1}{\skipS}); x := 2$. No
+  conditional in $S$ is the left operand of a sequence, and the thesis's
+  $\norm$ (\Th{Definition~4.33}) leaves $S$ unchanged. Let $s$ be the
+  state that maps every variable to $0$, $s_1 = s[x \mapsto 1]$ and
+  $s_2 = s_1[x \mapsto 2]$. Then $\sigma = s\,s\,s\,s_1\,s_2$ is a trace of
+  $S$ and $\sigma \eff_S \sigma$, but if $\sigma$ is placed at $1$ in $g$,
+  then $g$ does not satisfy $\tc_1(S)$: the conjunct for $x := 2$ is
+  $g(4) = g(3)[x \mapsto 2]$, but $g(3) = s$ and $g(4) = s_1$.
+\end{proposition}
+
+With the stronger normal form, the lemma holds.
+
+\begin{lemma}[\Th{Lemma~4.16}]\label{lem:tc}
+  Assume that every procedure conforms with its contract. If $S$ is in
+  normal form, $\sigma \eff_S \tau$, and $\tau$ is placed at $i$ in $g$,
+  then $g$ satisfies $\tc_i(S)$.
+\end{lemma}
+
+The proof is by induction on $\sigma \eff_S \tau$. A statement variable
+has no traces, so it does not occur as the left operand of a sequence in
+the induction.
+
+\begin{definition}[Normalization, corrected \Th{Definition~4.33}]
+  \label{def:norm}
+  Sequential composition in normal form is defined by
+  \begin{align*}
+    \seqn(S_1; S_2,\ S_3) &= S_1; \seqn(S_2, S_3)\\
+    \seqn(\ite{b}{S_1}{S_2},\ S_3) &=
+      \ite{b}{\seqn(S_1, S_3)}{\seqn(S_2, S_3)}\\
+    \seqn(S_1, S_3) &= S_1; S_3 \quad \text{otherwise.}
+  \end{align*}
+  Then $\norm(S_1;S_2) = \seqn(\norm(S_1), \norm(S_2))$, $\norm$ commutes
+  with conditionals, and it is the identity on atomic statements. A
+  procedure table is normalized by normalizing every body.
+\end{definition}
+
+\begin{lemma}[generalizes \Th{Lemma~4.11}]\label{lem:norm}
+  $\norm(S)$ is in normal form and has the same traces as $S$, also when
+  the procedure table is normalized. More generally,
+  $\Str'\sem{\seqn(S, S')}_{\rho,I} =
+  \Str'\sem{S}_{\rho,I} \chop \Str'\sem{S'}_{\rho,I}$ for every
+  interpretation $\rho$ of procedures.
+\end{lemma}
+
+The proof uses that chop is associative, distributes over union, and
+commutes with restriction and duplication on the left. The
+procedure-relative semantics $\Str'$ is that of GH's formalization; since
+the transformer whose least fixed point interprets the procedures does
+not change under normalization of the table, neither does $\Str$.
+
+\section{The specification encoding}
+
+\begin{definition}[\Th{Definition~4.17}]
+  $\pred^n_i(\phi)$ is defined by the equations of \Th{Definition~4.17},
+  with a fuel argument $n$: for a fixed-point formula,
+  $\pred^0_i(\mu X.\phi) = \mathit{false}$ and
+  $\pred^{n+1}_i(\mu X.\phi) = \pred^n_i(\phi[\mu X.\phi/X])$. The other
+  cases keep $n$.
+\end{definition}
+
+The thesis notes that $\pred_i(\mu X.X)$ is not well-defined. With fuel,
+$\pred$ is total, and the result below holds for any fuel.
+
+\begin{lemma}[\Th{Lemma~4.19}]\label{lem:pred}
+  If $\phi$ is closed and $g$ satisfies $\pred^n_i(\phi)$, then
+  $g(i)\,g(i+1) \in \fsem{\phi}$.
+\end{lemma}
+
+The proof of \Th{Lemma~4.24} rests on \Th{Lemma~2.22}. Its second
+equation fails: a trace in both $A\chop C$ and $B\chop C$ may be split at
+different positions.
+
+\begin{proposition}\label{prop:distr}
+  $\fsem{(\Id \land \Id\chop\Id)\chop \mathit{true}} = \emptyset$, but
+  \Th{Definition~4.23} distributes the chop to
+  $(\Id\chop\mathit{true}) \land ((\Id\chop\Id)\chop\mathit{true})$, whose
+  semantics contains $s\,s\,s$.
+\end{proposition}
+
+We do not know whether \Th{Theorem~4.29} itself fails with the thesis's
+$\distr$. Its proof uses \Th{Lemma~4.24} in the case for
+$(\mu X.\psi)\chop\phi_2$, and that step is not valid for conjunctions.
+
+\begin{definition}[corrected \Th{Definition~4.23}]
+  $\distr$ is defined as in \Th{Definition~4.23}, without the case for
+  conjunction: $\distr((\psi_1 \lor \psi_2)\chop\phi_2) =
+  \distr(\psi_1\chop\phi_2) \lor \distr(\psi_2\chop\phi_2)$, and
+  $\distr$ is applied to the subformulas otherwise.
+\end{definition}
+
+\begin{lemma}[\Th{Lemma~4.24}]
+  $\fsem{\distr(\phi)}_V = \fsem{\phi}_V$ for every $\phi$ and every
+  valuation $V$. Moreover, $\distr(\phi)$ has the same free variables as
+  $\phi$.
+\end{lemma}
+
+\section{The finite-trace calculus}
+
+\begin{definition}[\Th{Definition~4.28}]\label{def:ftc}
+  $\ftc^n_i(S, \phi, X)$ and the helper $\ftc'^n_i(S, \phi, X)$ are defined
+  by the equations of \Th{Definition~4.28}, where $X$ is a list of pairs
+  $(m, \psi)$, and with fuel $n$: $\ftc^0_i(S, \phi, X) = \mathit{false}$,
+  each case of $\ftc^{n+1}$ calls $\ftc^n$ or $\ftc'^n$, and each case of
+  $\ftc'^n$ calls $\ftc^n$ and $\pred^n$. The case for a call is
+  \[
+    \ftc'^n_i(\call{m}, \phi_1\chop\mu Y.\psi, X) =
+    Y = m \land \Pre_m(g(i+1)) \land \pred^n_i(\phi_1) \land C
+  \]
+  where $C$ is $\mathit{true}$ if $(m, \psi) \in X$, and otherwise the
+  side condition
+  \[
+    \forall h.\ \tc_1(S_m)(h) \land \Pre_m(h(1)) \Rightarrow
+      \ftc^n_1(S_m,\ \psi[\mu m.\psi/m],\ (m, \psi) :: X)(h)
+  \]
+  if $m\{S_m\} \in T$, and $\mathit{false}$ if $m$ is undeclared. All cases
+  that the thesis leaves undefined, including statement variables, are
+  $\mathit{false}$.
+\end{definition}
+
+The condition $Y = m$ is the thesis's requirement that the recursion
+variable be $X_m$. The thesis orders the cases by a lexicographic order
+whose details it omits, and its \Th{Theorem~4.29} assumes that
+$\ftc(S, \phi)$ is well-defined; with fuel, every $\ftc^n$ is a total
+function and sound.
+
+\begin{theorem}[\Th{Theorem~4.29}]\label{thm:ftc}
+  Assume that every procedure conforms with its contract and every
+  procedure body is in normal form. Let $\phi$ be closed, let
+  $\sigma \eff_S \tau$, and let $\tau$ be placed at $i$ in $g$. If $g$
+  satisfies $\ftc^n_i(S, \phi, [\,])$, then $\sigma \in \fsem{\phi}$.
+\end{theorem}
+
+The hypothesis that $\phi$ is normalised is dropped: the result holds for
+any closed $\phi$. Normalization of $\phi$ only makes more formulas
+provable.
+
+The proof is by induction on $n$. The claim is generalized to arbitrary
+lists $X$ that satisfy an invariant: $X$ is \emph{good below $L$} if for
+every $(m, \psi) \in X$ with $m\{S_m\} \in T$, every
+$\sigma' \in \Str\sem{S_m}$ with $|\sigma'| < L$ and
+$\Pre_m(\first\,\sigma')$ is in $\fsem{\mu m.\psi}$. The claim for fuel
+$n$ is: if $\ftc^n_i(S, \phi, X)$ holds as in the theorem and $X$ is good
+below $|\sigma|$, then $\sigma \in \fsem{\phi}$. The case of a recursive
+call, $(m, \psi) \in X$, follows directly from the invariant, since the
+trace of the body is shorter than the trace of the call. This is the
+precise form of the thesis's appeal to the side condition ``in the
+recursion that leads to this case''. The cases for sequences use that
+the invariant is preserved for shorter traces, and that chop is
+associative (for $\call{m}; S'$).
+
+\begin{lemma}\label{lem:side}
+  Assume the claim for fuel $n$, $m\{S_m\} \in T$, $\mu m.\psi$ closed,
+  $X$ good below $L$, and the side condition of
+  Definition~\ref{def:ftc} for $m$, $\psi$, $X$ and fuel $n$. Then every
+  $\sigma' \in \Str\sem{S_m}$ with $|\sigma'| < L$ and
+  $\Pre_m(\first\,\sigma')$ is in $\fsem{\mu m.\psi}$.
+\end{lemma}
+
+This is the case of a first call. The proof is by induction on the length
+of $\sigma'$. Take an effective trace $\tau'$ of $\sigma'$
+(Lemma~\ref{lem:eff-exists}) and place it at $1$ in some $h$. By
+Lemma~\ref{lem:tc}, which needs the body $S_m$ in normal form, $h$
+satisfies $\tc_1(S_m)$, so the side condition gives
+$\ftc^n_1(S_m, \psi[\mu m.\psi/m], (m, \psi) :: X)$. The list
+$(m, \psi) :: X$ is good below $|\sigma'|$ by the induction hypothesis,
+so the claim for fuel $n$ gives
+$\sigma' \in \fsem{\psi[\mu m.\psi/m]} = \fsem{\mu m.\psi}$.
+
+\begin{theorem}[\Th{Lemma~4.30}]\label{thm:vc}
+  Assume that every procedure conforms with its contract, and let $\phi$
+  be closed. Let $T'$ be $T$ with normalized bodies. If, with respect to
+  $T'$, every $g$ that satisfies $\tc_1(\norm(S))$ also satisfies
+  $\ftc^n_1(\norm(S), \phi, [\,])$, then $\Str\sem{S} \subseteq
+  \fsem{\phi}$.
+\end{theorem}
+
+This holds for every statement $S$ and every procedure table $T$. Its
+proof combines Lemmas~\ref{lem:eff-exists}, \ref{lem:tc} and
+\ref{lem:norm} with Theorem~\ref{thm:ftc}, as in the thesis. The
+formalization also proves the thesis's version, for $S$ and the procedure
+bodies already in normal form, with $\tc_1(S) \Rightarrow
+\ftc^n_1(S, \phi, [\,])$.
+
+\section{What is not formalized}
+
+The formalization stops at \Th{Lemma~4.30}. Not formalized are the
+first-order logic of \Th{Section~4.1}, the function $\mathrm{expand}$ and
+\Th{Lemma~4.21} and \Th{Proposition~4.27} (not needed for soundness), the
+procedure contract condition and \Th{Lemmas~4.35 and~4.36}, and the
+examples.
+
+\begin{thebibliography}{GH}
+\bibitem[GH]{GH} D.~Gurov and R.~H\"ahnle. \emph{An Expressive Trace Logic
+  for Recursive Programs}.
+  \url{https://arxiv.org/abs/2411.13125}.
+\bibitem[FS]{FS} F.~Stevanovic. \emph{Automated Verification of Finite-trace
+  Properties for Recursive Programs}. Master's thesis, KTH Royal Institute
+  of Technology, 2025.
+\end{thebibliography}
+
+\end{document}

@@ -35,6 +35,10 @@ derivation of Figure 6.
 - `doc/note.tex`: a short note that describes, in the notation of the
   paper, how the formalization differs from it. The table under
   [Note to HOL4](#note-to-hol4) maps its numbered items to HOL4 names.
+- `hol/verif/`: formalization of the soundness results of Chapter 4 of
+  F. Stevanovic, *Automated Verification of Finite-trace Properties for
+  Recursive Programs* (master's thesis, KTH, 2025), on top of the theories
+  above. See [Finite-trace calculus](#finite-trace-calculus).
 - `hol/ott*.sml`: Ott support library for HOL4, from HolBA
   (`examples/bir/compute/src/theory`).
 
@@ -105,6 +109,42 @@ theorems. Theory `traces` is generated from the Ott file.
 | Theorem 6.1 (paper Ex 5.2, Fig 6) | `even_stf_derivable`, `even_stf_valid`, `even_stf_valid_sos`; (Cons) steps `if_then_ent`, `if_else_ent`, `odd_call_ent`, `even_var_ent` | `evenOddExample` |
 | Remark 6.2 | `even_stf_derivable_short` | `evenOddExample` |
 | Figure 2 (SOS) | `c_red`, `sos_tr`, `Ssos` | `traces`, `tracesSos` |
+
+## Finite-trace calculus
+
+The directory `hol/verif` formalizes Lemma 4.16, Theorem 4.29 and Lemma 4.30
+of the thesis: the trace constraints `tc(S)` hold for every effective trace
+of `S`, a trace whose effective trace satisfies the finite-trace calculus
+`ftc(S, φ)` is in `||φ||`, and validity of `tc(S) ⇒ ftc(S, φ)` implies
+`Str[[S]] ⊆ ||φ||`. The encodings are embedded shallowly, as predicates on
+state sequences `num -> state`; the first-order logic of Section 4.1 is not
+formalized. Several thesis definitions are corrected, and counterexamples
+show why. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
+table maps its numbered items to HOL4 names.
+
+| Note | HOL4 name | Theory |
+|------|-----------|--------|
+| Definition 3.1 (contracts, thesis Def 4.5, 4.6) | `conforms` | `verifEff` |
+| Proposition 3.2 (thesis Def 4.8 inadequate) | `Seff_thesis`, `Seff_thesis_counterexample` | `verifCounterexamples` |
+| Definition 3.3 (effective traces) | `eff` (rules `eff_skip`, …), `eff_props`, `eff_Str` | `verifEff` |
+| Lemma 3.4 (replaces thesis Lemma 4.9) | `Str_eff` | `verifEff` |
+| Placing a trace in a state sequence | `agree`, `agree_exists` | `verifEff` |
+| Definition 4.1 (normal form) | `atomic`, `nf` | `verifNorm` |
+| Definition 4.2 (thesis Def 4.13) | `tc` | `verifTc` |
+| Proposition 4.3 (shape condition too weak) | `no_if_left`, `no_if_left_counterexample` | `verifNorm`, `verifCounterexamples` |
+| Lemma 4.4 (thesis Lemma 4.16) | `eff_tc` | `verifTc` |
+| Definition 4.5 (normalization) | `seqn`, `norm`, `norm_lk` | `verifNorm` |
+| Lemma 4.6 (thesis Lemma 4.11, generalized) | `Str0_seqn`, `Str0_norm`, `nf_norm`, `Str_norm`, `conforms_norm_lk` | `verifNorm` |
+| Definition 5.1 (thesis Def 4.17) | `pred` | `verifPred` |
+| Lemma 5.2 (thesis Lemma 4.19) | `pred_sound` | `verifPred` |
+| Proposition 5.3 (thesis Lemma 2.22, 4.24 fail for ∧) | `distr_and_counterexample` | `verifCounterexamples` |
+| Definition 5.4 (thesis Def 4.23, corrected) | `distr` | `verifPred` |
+| Lemma 5.5 (thesis Lemma 4.24) | `distr_sem`, `fv_f_distr` | `verifPred` |
+| Definition 6.1 (thesis Def 4.28) | `ftc`, `ftc0` | `verifFtc` |
+| Theorem 6.2 (thesis Theorem 4.29) | `ftc_sound` (via `ftc_claim_all`, `ftc0_sound`, `good`) | `verifFtc` |
+| Lemma 6.3 (first call) | `side_condition_sound` | `verifFtc` |
+| Theorem 6.4 (thesis Lemma 4.30) | `vc_sound`; thesis version `vc_sound_nf` | `verifFtc` |
+| Chop lemmas | `IN_chop`, `chop_assoc`, `chop_union_l`, `chop_restrict_l`, `chop_dup_l` | `verifChop` |
 
 ## Deviations from the paper
 

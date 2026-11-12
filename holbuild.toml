@@ -11,5 +11,5 @@ git = "https://github.com/HOL-Theorem-Prover/HOL.git"
 rev = "652d1f0aad5cd537ed1e5d470ba3444e70ba470e"
 
 [build]
-members = ["hol"]
+members = ["hol", "hol/verif"]
 tactic_timeout = 600.0
