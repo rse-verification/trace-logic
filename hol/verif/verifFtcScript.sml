@@ -12,11 +12,13 @@ Ancestors
 (* ------------------------------------------------------------------------ *)
 
 (* ftc_i(S, phi, X) and its helper ftc'_i(S, phi, X) as predicates on
-   state sequences g. X lists the pairs (m, psi) of procedures m whose
-   specification mu m. psi already has a side condition (the recursion
-   variable X_m of m is named m). The thesis's definition is partial;
-   here both functions take fuel n, spent at each step, and are false
-   when it runs out. Chop is not distributed over conjunction. *)
+   state sequences g. X lists the pairs (m, mu Y. psi) of procedures m and
+   the fixed-point formulas that already have a side condition for m. A
+   call m() may be specified by any fixed-point formula mu Y. psi, as in
+   thesis Examples 5.8 to 5.12, where a call consumes the fixed point that
+   expand introduces for a state formula. The thesis's definition is
+   partial; here both functions take fuel n, spent at each step, and are
+   false when it runs out. Chop is not distributed over conjunction. *)
 Definition ftc_def:
   (ftc (lk:lookup) pre post 0 (i:num) S0 phi (X:(string # f) list)
        (g:num -> state) = F) /\
@@ -43,14 +45,14 @@ Definition ftc_def:
   (ftc0 lk pre post n i (S_call m) phi X g =
      case phi of
        f_chop phi1 (f_mu Y psi) =>
-         (Y = m /\ pre m (g (i + 1)) /\ pred n i phi1 g /\
-          if MEM (m, psi) X then T
+         (pre m (g (i + 1)) /\ pred n i phi1 g /\
+          if MEM (m, f_mu Y psi) X then T
           else
             case lk m of
               SOME body =>
                 !h. tc pre post 1 body h /\ pre m (h 1) ==>
-                    ftc lk pre post n 1 body (subst_f (f_mu m psi) m psi)
-                        ((m, psi)::X) h
+                    ftc lk pre post n 1 body (subst_f (f_mu Y psi) Y psi)
+                        ((m, f_mu Y psi)::X) h
             | NONE => F)
      | _ => F) /\
   (ftc0 lk pre post n i (S_seq S1 S2) phi X g =
@@ -79,10 +81,10 @@ End
    than L *)
 Definition good_def:
   good (lk:lookup) (pre:string -> state -> bool) relI (L:num) X =
-    !m psi body t.
-      MEM (m, psi) X /\ lk m = SOME body /\ t IN Str lk (K {}) body /\
+    !m mu body t.
+      MEM (m, mu) X /\ lk m = SOME body /\ t IN Str lk (K {}) body /\
       LENGTH t < L /\ pre m (HD t) ==>
-      t IN fsem relI (f_mu m psi)
+      t IN fsem relI mu
 End
 
 Theorem good_mono:
@@ -133,19 +135,19 @@ End
 (* the case of a first call m(): the side condition and the claim for
    less fuel give the specification of all body traces *)
 Theorem side_condition_sound:
-  !lk pre post relI n m psi body X L.
+  !lk pre post relI n m Y psi body X L.
     sound_hyps lk pre post /\ ftc_claim lk pre post relI n /\
-    lk m = SOME body /\ fv_f (f_mu m psi) = [] /\
+    lk m = SOME body /\ fv_f (f_mu Y psi) = [] /\
     good lk pre relI L X /\
     (!h. tc pre post 1 body h /\ pre m (h 1) ==>
-         ftc lk pre post n 1 body (subst_f (f_mu m psi) m psi)
-             ((m, psi)::X) h) ==>
+         ftc lk pre post n 1 body (subst_f (f_mu Y psi) Y psi)
+             ((m, f_mu Y psi)::X) h) ==>
     !t. t IN Str lk (K {}) body /\ LENGTH t < L /\ pre m (HD t) ==>
-        t IN fsem relI (f_mu m psi)
+        t IN fsem relI (f_mu Y psi)
 Proof
   rpt gen_tac >> strip_tac >>
   `!k t. LENGTH t = k /\ t IN Str lk (K {}) body /\ LENGTH t < L /\
-         pre m (HD t) ==> t IN fsem relI (f_mu m psi)`
+         pre m (HD t) ==> t IN fsem relI (f_mu Y psi)`
     suffices_by metis_tac[] >>
   completeInduct_on `k` >> rw[] >>
   drule Str_eff >> strip_tac >>
@@ -154,13 +156,14 @@ Proof
     by (fs[sound_hyps_def] >> metis_tac[eff_tc]) >>
   `pre m (g 1)`
     by (imp_res_tac eff_HD >> Cases_on `u` >> fs[agree_def]) >>
-  `ftc lk pre post n 1 body (subst_f (f_mu m psi) m psi) ((m,psi)::X) g`
+  `ftc lk pre post n 1 body (subst_f (f_mu Y psi) Y psi)
+       ((m, f_mu Y psi)::X) g`
     by metis_tac[] >>
-  `good lk pre relI (LENGTH t) ((m,psi)::X)`
+  `good lk pre relI (LENGTH t) ((m, f_mu Y psi)::X)`
     by (simp[good_def] >> rpt strip_tac >> fs[good_def] >> rw[] >>
         fs[] >> metis_tac[LESS_TRANS]) >>
   fs[ftc_claim_def] >>
-  `t IN fsem relI (subst_f (f_mu m psi) m psi)`
+  `t IN fsem relI (subst_f (f_mu Y psi) Y psi)`
     by (first_x_assum irule >> rw[closed_unfold] >> metis_tac[]) >>
   metis_tac[fsem_unfold]
 QED
@@ -239,18 +242,18 @@ Proof
       rename1 `S_call m` >> strip_tac >>
       Cases_on `phi` >> fs[ftc_def] >>
       rename1 `f_chop f1 f2` >> Cases_on `f2` >> fs[fv_f_def, fsem_chop] >>
-      rw[] >> rename1 `f_mu m psi` >>
+      rw[] >> rename1 `f_mu Y psi` >>
       qpat_x_assum `eff _ (S_call _) _ _`
         (strip_assume_tac o ONCE_REWRITE_RULE [eff_cases]) >>
       fs[] >> rw[] >>
       drule Str_call_cases >> strip_tac >> rw[] >> fs[agree_def] >>
       irule chop_intro_pair >> rw[] >>
       TRY (metis_tac[pred_sound] >> NO_TAC) >>
-      Cases_on `MEM (m,psi) X` >> fs[]
+      Cases_on `MEM (m, f_mu Y psi) X` >> fs[]
       >- (fs[good_def] >> first_x_assum irule >> rw[] >> metis_tac[]) >>
       irule side_condition_sound >> rw[fv_f_def] >>
-      qexistsl_tac [`SUC (SUC (LENGTH r))`, `X`, `body`, `lk`, `n`, `post`,
-                    `pre`] >>
+      qexistsl_tac [`SUC (SUC (LENGTH r))`, `X`, `body`, `lk`, `m`, `n`,
+                    `post`, `pre`] >>
       rw[])
   >- ((* statement variable *)
       rw[ftc_def])

@@ -137,6 +137,9 @@ The noteworthy points, compared to the thesis, are:
   condition. \Th{Algorithms~1 and~2} instead check it separately and
   replace it by its truth value, which is equivalent because it is
   closed; the formalization does not model the dependency graph.
+\item \emph{Fixed points of calls.} A call may consume any fixed point,
+  as the thesis's evaluation examples require; the companion formalization
+  was adjusted for this (Definition~V.6.1).
 \item \emph{No capture-avoiding substitution.} The generators take the
   index of the first state as a parameter, so no formula is ever shifted
   by substitution, and the side conditions bind all their state variables.
@@ -267,7 +270,7 @@ variables $s(k)$.
   \[
     \forall s(1), \dots, s(N) \in \State.\;
       \tc_1(S_m) \land \Pre_m(s(1)) \Rightarrow
-      \ftc_1(S_m, \psi[\mu X_m.\psi/X_m], (m, \psi) :: X),
+      \ftc_1(S_m, \psi[\mu Y.\psi/Y], (m, \mu Y.\psi) :: X),
   \]
   where $N = 1 + \stb(S_m)$, and $\stb(S)$ bounds the number of state
   variables after the first that a statement's formulas mention.
@@ -402,6 +405,33 @@ The procedure is $m\{\ite{x \le 0}{x := 0}{(x := x - 1; \call{m})}\}$ of
   \end{itemize}
 \end{proposition}
 
+\begin{proposition}[\Th{Section~5.4}]\label{prop:ex-eval}
+  The examples of \Th{Table~5.1} that the tool decides correctly have the
+  same outcome in the formalization:
+  \begin{itemize}
+  \item \Th{Examples~5.5, 5.8, 5.10 and~5.12} (accepted): the
+    verification conditions hold in $\M_{\mathit{UNIV}}$ and, with $\Id$
+    and $\Sb{}{x}$ over the program variables, in $\M_{xs}$; both
+    end-to-end theorems give $\Str\sem{S} \subseteq \fsem{\phi}$.
+  \item \Th{Example~5.6} (rejected): the main condition does not hold,
+    for any fuel, since the precondition $x \ge 0$ of the call need not
+    hold; and the program violates its specification, as the trace from a
+    state with $x = -1$ shows.
+  \end{itemize}
+  For \Th{Example~5.5}, the generated trace constraints have the shape of
+  the SMT assertion in the thesis.
+\end{proposition}
+
+\Th{Examples~5.8, 5.10 and~5.12} need a call to consume a fixed point
+other than one for the called procedure, here the one that
+$\mathrm{expand}$ introduces for $\mathit{true}$; the companion
+formalization allows this (Definition~V.6.1). \Th{Example~5.8} writes
+$x := xl + 1$ for $x := x + 1$, and the disjunctions and implications of
+\Th{Example~5.12} are expressed with $\neg$ and $\land$. The proofs reduce
+the generated formulas to the shallow conditions
+(Theorem~\ref{thm:gen}), which \texttt{EVAL} and integer arithmetic
+decide in a few seconds per example.
+
 The generated formulas are readable. For instance, for $xs = [x, y]$,
 the step $y := x$ from $s(1)$ to $s(2)$ becomes
 $\mathsf{State}(s1) \land \mathsf{State}(s2) \land \tsel{y}(s2) =
@@ -442,7 +472,8 @@ Not formalized are the SMT-LIB text and Z3 itself, the dependency graph of
 \Th{Algorithms~1 and~2}, and completeness. The proof-of-concept tool
 differs from the thesis in some details that the formalization follows the
 thesis in: it recognizes a recursive call by the recursion variable alone,
-not by the pair $(X_m, \psi)$; its contract condition does not duplicate
+not by the pair of the procedure and the fixed-point formula; its contract
+condition does not duplicate
 the state at a call; and it supports read statements and relations that
 the language of GH does not have.
 

@@ -327,8 +327,8 @@ Proof
   `!m s. pre m (proj xs s) <=> pre m s` by fs[inv_pre_def] >> fs[] >>
   TRY (metis_tac[pred_proj, agree_out_refl] >> NO_TAC) >>
   (* the side condition of a first call: project the body's sequence *)
-  rename1 `lk m = SOME body` >> rename1 `MEM (m, psi) X` >>
-  Cases_on `MEM (m, psi) X` >> fs[] >> rpt strip_tac >>
+  rename1 `lk m = SOME body` >> rename1 `MEM (m, f_mu Y psi) X` >>
+  Cases_on `MEM (m, f_mu Y psi) X` >> fs[] >> rpt strip_tac >>
   qpat_x_assum `!g. tc _ _ 1 _ g /\ _ ==> _` (qspec_then `h` mp_tac) >>
   impl_tac >- fs[] >> disch_then irule >> rw[] >>
   TRY (metis_tac[fvars_unfold_sub] >> NO_TAC) >>

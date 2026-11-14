@@ -203,6 +203,7 @@ to the thesis; the table maps its numbered items to HOL4 names.
 | Theorem 6.4 | `vc_fols_sound_xs`, `vc_fols_xs_sound`, `vc_fols_xs_sound_fol` | `vcXs` |
 | Proposition 7.1 | `ct31_pcc_valid`, `ct31_conforms`, `ct_wrong_not_pcc_valid` | `vcExamples` |
 | Proposition 7.2 | `ex31_vc_fols`, `ex31_fol`, `ex31_xs_vc`, `ex31_xs`, `ex432_fol_weak_fails`, `ex432_fol` | `vcExamples` |
+| Proposition 7.3 (thesis Section 5.4, Examples 5.5, 5.6, 5.8, 5.10, 5.12) | `ex55_tc_shape`, `ex55`, `ex55_xs`, `ex56_rejected`, `ex56_violation`, `ex58`, `ex58_xs`, `ex510`, `ex510_xs`, `ex512`, `ex512_xs` (via `vc_fols_of_shallow`, `vc_fols_xs_of_shallow`) | `vcEval` |
 
 ## Deviations from the paper
 

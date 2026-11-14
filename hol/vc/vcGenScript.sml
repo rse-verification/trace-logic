@@ -398,21 +398,19 @@ Definition ftc_fol_def:
   (ftc0_fol lk ct n i (S_call m) phi X =
      case phi of
        f_chop phi1 (f_mu Y psi) =>
-         if Y = m then
-           SAnd (pre_sform ct m (svar (i + 1)))
-                (SAnd (pred_fol n i phi1)
-                      (if MEM (m, psi) X then STrue
-                       else
-                         case lk m of
-                           SOME body =>
-                             sforall_from 1 (SUC (stb body))
-                               (SImp (SAnd (tc_fol ct 1 body)
-                                           (pre_sform ct m (svar 1)))
-                                     (ftc_fol lk ct n 1 body
-                                        (subst_f (f_mu m psi) m psi)
-                                        ((m, psi)::X)))
-                         | NONE => SFalse))
-         else SFalse
+         SAnd (pre_sform ct m (svar (i + 1)))
+              (SAnd (pred_fol n i phi1)
+                    (if MEM (m, f_mu Y psi) X then STrue
+                     else
+                       case lk m of
+                         SOME body =>
+                           sforall_from 1 (SUC (stb body))
+                             (SImp (SAnd (tc_fol ct 1 body)
+                                         (pre_sform ct m (svar 1)))
+                                   (ftc_fol lk ct n 1 body
+                                      (subst_f (f_mu Y psi) Y psi)
+                                      ((m, f_mu Y psi)::X)))
+                       | NONE => SFalse))
      | _ => SFalse) /\
   (ftc0_fol lk ct n i (S_seq S1 S2) phi X =
      case (S1, phi) of
@@ -518,15 +516,16 @@ Definition ftc_dom_def:
   (ftc0_dom D lk pre post n i (S_call m) phi X g =
      case phi of
        f_chop phi1 (f_mu Y psi) =>
-         (Y = m /\ pre m (g (i + 1)) /\ pred n i phi1 g /\
-          if MEM (m, psi) X then T
+         (pre m (g (i + 1)) /\ pred n i phi1 g /\
+          if MEM (m, f_mu Y psi) X then T
           else
             case lk m of
               SOME body =>
                 !h. (!j. 1 <= j /\ j <= stb body + 1 ==> h j IN D) /\
                     tc pre post 1 body h /\ pre m (h 1) ==>
                     ftc_dom D lk pre post n 1 body
-                            (subst_f (f_mu m psi) m psi) ((m, psi)::X) h
+                            (subst_f (f_mu Y psi) Y psi)
+                            ((m, f_mu Y psi)::X) h
             | NONE => F)
      | _ => F) /\
   (ftc0_dom D lk pre post n i (S_seq S1 S2) phi X g =
@@ -558,7 +557,7 @@ Proof
   ho_match_mp_tac ftc_ind >> rpt conj_tac >> rpt strip_tac >>
   simp[Once ftc_dom_def, Once ftc_def] >>
   rpt CASE_TAC >> fs[] >>
-  rename1 `MEM (m, psi) X` >> Cases_on `MEM (m, psi) X` >> fs[] 
+  rename1 `MEM (m, mu) X` >> Cases_on `MEM (m, mu) X` >> fs[] 
 
 QED
 

@@ -122,6 +122,12 @@ proofs as stated; with the definitions as stated, \Th{Lemma~4.16},
   as stated, the case for a call in \Th{Definition~4.28} does not apply
   to them. The corrected $\distr$ does both, and the formalization verifies
   these examples (Theorem~\ref{thm:ex431}).
+\item \emph{Fixed points of calls.} \Th{Definition~4.28} writes the
+  specification of a call as $\mu X_m.\psi$, which suggests that the
+  recursion variable must belong to the called procedure. The thesis's
+  \Th{Examples~5.8 to~5.12} instead let a call consume any fixed point,
+  such as the one that $\mathrm{expand}$ introduces for a state formula.
+  The formalization accepts any fixed point (Definition~\ref{def:ftc}).
 \item \emph{Partial functions.} $\pred$ and $\ftc$
   (\Th{Definitions~4.17 and~4.28}) need not terminate. The formalization
   gives them fuel and makes them false when it runs out. Theorem~4.29 then
@@ -410,26 +416,32 @@ both sides. Together with \Th{Lemma~4.21}, this gives
 \begin{definition}[\Th{Definition~4.28}]\label{def:ftc}
   $\ftc^n_i(S, \phi, X)$ and the helper $\ftc'^n_i(S, \phi, X)$ are defined
   by the equations of \Th{Definition~4.28}, where $X$ is a list of pairs
-  $(m, \psi)$, and with fuel $n$: $\ftc^0_i(S, \phi, X) = \mathit{false}$,
+  $(m, \mu Y.\psi)$ of a procedure and a fixed-point formula, and with fuel
+  $n$: $\ftc^0_i(S, \phi, X) = \mathit{false}$,
   each case of $\ftc^{n+1}$ calls $\ftc^n$ or $\ftc'^n$, and each case of
   $\ftc'^n$ calls $\ftc^n$ and $\pred^n$. The case for a call is
   \[
     \ftc'^n_i(\call{m}, \phi_1\chop\mu Y.\psi, X) =
-    Y = m \land \Pre_m(g(i+1)) \land \pred^n_i(\phi_1) \land C
+    \Pre_m(g(i+1)) \land \pred^n_i(\phi_1) \land C
   \]
-  where $C$ is $\mathit{true}$ if $(m, \psi) \in X$, and otherwise the
+  where $C$ is $\mathit{true}$ if $(m, \mu Y.\psi) \in X$, and otherwise the
   side condition
   \[
     \forall h.\ \tc_1(S_m)(h) \land \Pre_m(h(1)) \Rightarrow
-      \ftc^n_1(S_m,\ \psi[\mu m.\psi/m],\ (m, \psi) :: X)(h)
+      \ftc^n_1(S_m,\ \psi[\mu Y.\psi/Y],\ (m, \mu Y.\psi) :: X)(h)
   \]
   if $m\{S_m\} \in T$, and $\mathit{false}$ if $m$ is undeclared. All cases
   that the thesis leaves undefined, including statement variables, are
   $\mathit{false}$.
 \end{definition}
 
-The condition $Y = m$ is the thesis's requirement that the recursion
-variable be $X_m$. The thesis orders the cases by a lexicographic order
+\Th{Definition~4.28} writes the fixed point of a call as $\mu X_m.\psi$,
+but a call may be specified by any fixed point $\mu Y.\psi$. The thesis's
+own \Th{Examples~5.8 to~5.12} rely on this: a call consumes the fixed point
+that $\mathrm{expand}$ introduces for a state formula (see the discussion
+of \Th{Example~5.11}). Requiring $Y = X_m$ is sound but rejects these
+examples. $X$ therefore records the whole fixed-point formula. The thesis
+orders the cases by a lexicographic order
 whose details it omits, and its \Th{Theorem~4.29} assumes that
 $\ftc(S, \phi)$ is well-defined; with fuel, every $\ftc^n$ is a total
 function and sound.
@@ -447,12 +459,12 @@ provable.
 
 The proof is by induction on $n$. The claim is generalized to arbitrary
 lists $X$ that satisfy an invariant: $X$ is \emph{good below $L$} if for
-every $(m, \psi) \in X$ with $m\{S_m\} \in T$, every
+every $(m, \mu Y.\psi) \in X$ with $m\{S_m\} \in T$, every
 $\sigma' \in \Str\sem{S_m}$ with $|\sigma'| < L$ and
-$\Pre_m(\first\,\sigma')$ is in $\fsem{\mu m.\psi}$. The claim for fuel
+$\Pre_m(\first\,\sigma')$ is in $\fsem{\mu Y.\psi}$. The claim for fuel
 $n$ is: if $\ftc^n_i(S, \phi, X)$ holds as in the theorem and $X$ is good
 below $|\sigma|$, then $\sigma \in \fsem{\phi}$. The case of a recursive
-call, $(m, \psi) \in X$, follows directly from the invariant, since the
+call, $(m, \mu Y.\psi) \in X$, follows directly from the invariant, since the
 trace of the body is shorter than the trace of the call. This is the
 precise form of the thesis's appeal to the side condition ``in the
 recursion that leads to this case''. The cases for sequences use that
@@ -460,11 +472,11 @@ the invariant is preserved for shorter traces, and that chop is
 associative (for $\call{m}; S'$).
 
 \begin{lemma}\label{lem:side}
-  Assume the claim for fuel $n$, $m\{S_m\} \in T$, $\mu m.\psi$ closed,
+  Assume the claim for fuel $n$, $m\{S_m\} \in T$, $\mu Y.\psi$ closed,
   $X$ good below $L$, and the side condition of
-  Definition~\ref{def:ftc} for $m$, $\psi$, $X$ and fuel $n$. Then every
-  $\sigma' \in \Str\sem{S_m}$ with $|\sigma'| < L$ and
-  $\Pre_m(\first\,\sigma')$ is in $\fsem{\mu m.\psi}$.
+  Definition~\ref{def:ftc} for $m$, $\mu Y.\psi$, $X$ and fuel $n$. Then
+  every $\sigma' \in \Str\sem{S_m}$ with $|\sigma'| < L$ and
+  $\Pre_m(\first\,\sigma')$ is in $\fsem{\mu Y.\psi}$.
 \end{lemma}
 
 This is the case of a first call. The proof is by induction on the length
@@ -472,10 +484,10 @@ of $\sigma'$. Take an effective trace $\tau'$ of $\sigma'$
 (Lemma~\ref{lem:eff-exists}) and place it at $1$ in some $h$. By
 Lemma~\ref{lem:tc}, which needs the body $S_m$ in normal form, $h$
 satisfies $\tc_1(S_m)$, so the side condition gives
-$\ftc^n_1(S_m, \psi[\mu m.\psi/m], (m, \psi) :: X)$. The list
-$(m, \psi) :: X$ is good below $|\sigma'|$ by the induction hypothesis,
-so the claim for fuel $n$ gives
-$\sigma' \in \fsem{\psi[\mu m.\psi/m]} = \fsem{\mu m.\psi}$.
+$\ftc^n_1(S_m, \psi[\mu Y.\psi/Y], (m, \mu Y.\psi) :: X)$. The list
+$(m, \mu Y.\psi) :: X$ is good below $|\sigma'|$ by the induction
+hypothesis, so the claim for fuel $n$ gives
+$\sigma' \in \fsem{\psi[\mu Y.\psi/Y]} = \fsem{\mu Y.\psi}$.
 
 \begin{theorem}[\Th{Lemma~4.30}]\label{thm:vc}
   Assume that every procedure conforms with its contract, and let $\phi$
@@ -602,7 +614,7 @@ formalized.
 
 $\ftc$ follows the shape of $S$. The call matches $\Id\chop\mu X_m.\psi$,
 and the side condition checks $S_m$ against $\psi[\mu X_m.\psi/X_m]$, in
-which the recursive call is discharged because $(m, \psi) \in X$. The
+which the recursive call is discharged because $(m, \mu X_m.\psi) \in X$. The
 trace of the variant is not in $\fsem{\phi}$ because every trace in
 $\fsem{\phi}$ ends with two equal states.
 
@@ -666,10 +678,14 @@ initially.
 
 \section{What is not formalized}
 
-The formalization stops at \Th{Lemma~4.30}. Not formalized are the
-first-order logic of \Th{Section~4.1}, the procedure contract condition
-and \Th{Lemmas~4.35 and~4.36}, and the examples of the thesis not listed
-in Section~\ref{sec:examples}.
+This formalization stops at \Th{Lemma~4.30}, with the encodings as
+predicates on state sequences. The first-order logic of
+\Th{Section~4.1}, the procedure contract condition and
+\Th{Lemmas~4.35 and~4.36}, a conversion to first-order verification
+conditions with end-to-end soundness, and the evaluation examples of
+\Th{Section~5.4} are formalized on top of it, as described in a separate
+note (\texttt{doc/fol.tex}). Not formalized are the other examples of
+the thesis.
 
 \begin{thebibliography}{GH}
 \bibitem[GH]{GH} D.~Gurov and R.~H\"ahnle. \emph{An Expressive Trace Logic
