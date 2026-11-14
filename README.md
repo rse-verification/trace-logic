@@ -271,7 +271,7 @@ conditions. The end-to-end theorems state that if the verification
 conditions hold in the thesis's structure (integers and states), every
 trace of the program satisfies the specification; one version has states
 over the program variables and `Id`, `Sb` as conjunctions, as in the Z3
-encoding of the [tool accompanying the thesis](https://github.com/F200907/ftc-tool).
+encoding of the [tool developed for the thesis](https://doi.org/10.5281/zenodo.17093405).
 `doc/fol.tex` (`make doc/fol.pdf`) describes the design and the relation
 to the thesis; the table maps its numbered items to HOL4 names.
 
