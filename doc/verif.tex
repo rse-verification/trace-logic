@@ -79,7 +79,8 @@ encodes the specification $\phi$. The formalization covers
   implies $\Str\sem{S} \subseteq \fsem{\phi}$;
 \end{itemize}
 and examples of the thesis that check that the definitions and results
-apply as intended (Section~\ref{sec:examples}).
+apply as intended (Section~\ref{sec:examples}), and that show that the
+converse of \Th{Lemma~4.30} fails (Section~\ref{sec:incomplete}).
 It is built on the formalization of the paper by Gurov and
 H\"ahnle~\cite{GH}, whose language, semantics and trace logic the thesis
 uses (\Th{Chapter~2}). The note on that formalization describes its
@@ -132,9 +133,9 @@ proofs as stated; with the definitions as stated, \Th{Lemma~4.16},
   (\Th{Definitions~4.17 and~4.28}) need not terminate. The formalization
   gives them fuel and makes them false when it runs out. Theorem~4.29 then
   needs neither the hypothesis that $\ftc(S, \phi)$ is well-defined nor that
-  $\phi$ is normalised (Theorem~\ref{thm:ftc}). The function $\mathrm{expand}$
-  (\Th{Definition~4.20}) only matters for completeness and is not
-  formalized.
+  $\phi$ is normalised (Theorem~\ref{thm:ftc}). Nor does it need the
+  function $\mathrm{expand}$ (\Th{Definition~4.20}); it is formalized with
+  \Th{Lemma~4.21} and normalises the specifications of the examples.
 \item \emph{Proof of \Th{Theorem~4.29}.} The case of a recursive call
   relies on a side condition generated earlier in the recursion. The
   formalization makes this precise with an invariant on the set $X$ of
@@ -142,9 +143,10 @@ proofs as stated; with the definitions as stated, \Th{Lemma~4.16},
   induction on the length of the traces of the procedure body
   (Lemma~\ref{lem:side}).
 \end{itemize}
-The first-order logic of \Th{Section~4.1} is not formalized. The encodings
-are embedded shallowly, as predicates on state sequences
-(Section~\ref{sec:conv}).
+The encodings are embedded shallowly here, as predicates on state
+sequences (Section~\ref{sec:conv}). The first-order logic of
+\Th{Section~4.1} is formalized on top of them, as described in a separate
+note (\texttt{doc/fol.tex}).
 
 Each numbered definition and result in this note corresponds to a HOL4
 definition or theorem in the directory \texttt{hol/verif}. The file
@@ -676,6 +678,73 @@ The thesis says that $\tc(S)$ of \Th{Example~4.15} is unsatisfiable
 regardless of $y$; it is satisfiable when $y \neq 0$ and $x = 2$
 initially.
 
+\section{Incompleteness}\label{sec:incomplete}
+
+The converse of Theorem~\ref{thm:vc} fails: a statement may satisfy its
+specification while $\tc(S) \Rightarrow \ftc(S, \phi)$ is not valid
+(\Th{Section~6.3}). The formalization shows this for \Th{Examples~6.5
+and~6.6}. In both, the failure holds for every contract that the
+procedures conform with, so a stronger contract does not help, and for
+every fuel.
+
+\begin{theorem}[\Th{Example~6.5}]\label{thm:ex65}
+  Let
+  \[
+    T = m\{\ite{x > 0}{(y := 2 \cdot y; x := x - 1; \call{m})}{x :=
+    0}\},
+  \]
+  $S = x := 5; y := 1; \call{m}$ and $\phi = \mathit{true}\chop\Sb{8}{y}
+  \chop\mathit{true}$. Then $\Str\sem{S} \subseteq \fsem{\phi}$. For every
+  contract that $m$ conforms with, some $g$ satisfies $\tc_1(S)$ but not
+  $\ftc^n_1(S, \distr(\mathrm{expand}(\phi)), [\,])$, for every $n$.
+\end{theorem}
+
+The thesis writes $\Sb{2^3}{y}$; arithmetic expressions have no
+exponentiation, so the formalization writes $8$. Every trace of $S$ sets
+$y$ to $8$ in the third iteration of $m$, when $y = 4$. The proof shows
+that the traces of $\call{m}$ that start with $(x, y)$ equal to $(5, 1)$,
+$(4, 2)$ or $(3, 4)$ have such a step, by the pre-fixed-point argument of
+Lemma~\ref{lem:m-conf}. The verification condition fails because $\ftc$
+can check $\Sb{8}{y}$ only with $\pred$, at one of the steps of $x := 5$,
+$y := 1$ and the duplicated first state of the call, and none of them
+sets $y$ to $8$. The only fixed point that can specify the call is the
+one that $\mathrm{expand}$ introduces for the last $\mathit{true}$, which
+does not mention $y$: the contract describes only the first and last
+states of the call. The witness $g$ needs a final state for the call that
+satisfies the contract; it is the last state of a trace of $\call{m}$,
+which terminates from every state with $x \ge 0$.
+
+\begin{theorem}[\Th{Example~6.6}]\label{thm:ex66}
+  Let $T = m\{x := x + 1; \call{n}\}, n\{y := y + 1\}$, $S = \call{m}$ and
+  $\phi = \Id\chop\Sb{x+1}{x}\chop\Id\chop\Sb{y+1}{y}$. Then
+  \begin{itemize}
+  \item $\Str\sem{S} = \fsem{\phi}$ and $\distr(\mathrm{expand}(\phi)) =
+    \phi$;
+  \item $\ftc^n_1(S, \phi, [\,])$ is false for every $g$, $n$ and
+    contract, while $\tc_1(S)$ is satisfiable for every contract that $m$
+    and $n$ conform with;
+  \item for $\phi_\mu = \Id\chop\mu X_m.\,(\Sb{x+1}{x}\chop\Id\chop\mu
+    X_n.\,\Sb{y+1}{y})$, $\fsem{\phi_\mu} = \fsem{\phi}$, and with
+    $\Pre_m = \Pre_n = \mathit{true}$ and any postconditions, $\tc_1(S)
+    \Rightarrow \ftc^{10}_1(S, \phi_\mu, [\,])$ is valid.
+  \end{itemize}
+\end{theorem}
+
+So $\Str\sem{S} \subseteq \fsem{\phi}$ holds, with equality: $\phi$ is the
+strongest trace formula of $S$ with the fixed points unfolded. $\ftc$
+fails because the case for a call needs $\phi_1\chop\mu Y.\psi$, and
+$\phi$ has no fixed point. With the fixed points of $\phi_\mu$, as the
+thesis suggests, the verification condition holds, and
+Theorem~\ref{thm:vc} gives $\Str\sem{S} \subseteq \fsem{\phi_\mu}$.
+
+The formalized $\ftc$ accepts any fixed point for a call
+(Definition~\ref{def:ftc}), while the thesis's \Th{Definition~4.28}
+suggests that the recursion variable must be $X_m$. The theorems above are
+about the more permissive $\ftc$. For the thesis's version, the
+verification conditions of both examples fail for the same reasons; in
+\Th{Example~6.5}, the fixed point from $\mathrm{expand}$ then cannot
+specify the call at all. This is not formalized.
+
 \section{What is not formalized}
 
 This formalization stops at \Th{Lemma~4.30}, with the encodings as
@@ -685,7 +754,8 @@ predicates on state sequences. The first-order logic of
 conditions with end-to-end soundness, and the evaluation examples of
 \Th{Section~5.4} are formalized on top of it, as described in a separate
 note (\texttt{doc/fol.tex}). Not formalized are the other examples of
-the thesis.
+the thesis, among them those of \Th{Sections~6.1 and~6.2}, which
+illustrate alternative designs of the calculus.
 
 \begin{thebibliography}{GH}
 \bibitem[GH]{GH} D.~Gurov and R.~H\"ahnle. \emph{An Expressive Trace Logic

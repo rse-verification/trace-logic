@@ -142,7 +142,10 @@ formalized separately (see [First-order encoding](#first-order-encoding)).
 Several thesis definitions are corrected, and counterexamples show why; in particular, Theorem 4.29 and Lemma 4.30 fail with the thesis's
 `distr`, which distributes chop over conjunction. Examples of the thesis,
 among them the motivating Example 3.1 and Examples 4.31 and 4.32, are
-verified with the corrected definitions. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
+verified with the corrected definitions. Examples 6.5 and 6.6 show that
+the method is incomplete: every trace satisfies the specification, but the
+verification condition fails for every contract the procedures conform
+with. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
 table maps its numbered items to HOL4 names.
 
 | Note | HOL4 name | Theory |
@@ -175,6 +178,8 @@ table maps its numbered items to HOL4 names.
 | Theorem 8.2 (thesis Example 3.1) | `ex31_vc`, `ex31`, `ex31_nonvacuous` | `verifExamples` |
 | Theorem 8.3 (thesis Examples 4.31, 4.32) | `ex431_vc`, `ex431`, `ex432_weak_fails`, `ex432_vc`, `ex432` | `verifExamples` |
 | Proposition 8.4 (thesis Examples 4.12, 4.15, 4.18, 4.25) | `ex412`, `ex415`, `ex418`, `ex425` | `verifExamples` |
+| Theorem 9.1 (thesis Example 6.5) | `ex65_incomplete` (via `ex65_Str`, `m65_call_phi`, `m65_terminates`) | `verifIncompleteness` |
+| Theorem 9.2 (thesis Example 6.6) | `ex66_fsem`, `ex66_normalised`, `ex66_ftc_fails`, `ex66_incomplete`, `ex66_mu_fsem`, `ex66_mu_vc`, `ex66_mu` | `verifIncompleteness` |
 | Chop lemmas | `IN_chop`, `chop_assoc`, `chop_union_l`, `chop_union_r`, `chop_restrict_l`, `chop_dup_l` | `verifChop` |
 
 ## First-order encoding
