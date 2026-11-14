@@ -19,4 +19,5 @@ manifest = "shims/hol_folcompactness.toml"
 
 [build]
 members = ["hol", "hol/verif", "hol/fol", "hol/vc"]
-tactic_timeout = 600.0
+# about 10x the slowest proof step (15.6 s in vcEval, November 2026)
+tactic_timeout = 150.0

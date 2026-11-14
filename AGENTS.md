@@ -42,7 +42,12 @@ Most of the notes below apply to any Ott + HOL4 formalization.
 ## Using holbuild effectively when developing proofs
 
 - Use `holbuild build --tactic-timeout 60 <theory>Theory` so a looping tactic
-  fails within a minute. The default timeout is 600 s.
+  fails within a minute. The project's limit (`tactic_timeout` in
+  `holbuild.toml`) is 150 s, about 10 times the slowest proof step (a `rw[]`
+  in `vcEval` that takes about 15 s). To find the slowest steps, build with
+  `holbuild build --force=project --trace-steps` and sort the `elapsed_ms`
+  fields of `.holbuild/logs/current/rectraces/*/proof-trace.log`. If a new
+  proof step comes near the limit, speed it up rather than raising the limit.
 - When a proof fails, holbuild prints the failing tactic fragment, its
   position in the source and the goal it was applied to, then resumes from a
   checkpoint on the next build. Read the printed goal and fix that step,
