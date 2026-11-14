@@ -39,6 +39,13 @@ derivation of Figure 6.
   F. Stevanovic, *Automated Verification of Finite-trace Properties for
   Recursive Programs* (master's thesis, KTH, 2025), on top of the theories
   above. See [Finite-trace calculus](#finite-trace-calculus).
+- `hol/fol/`: first-order logic with string names, proved equivalent to the
+  deep embedding of HOL4's `examples/logic/folcompactness`, and the
+  structure of the thesis's first-order logic (Section 4.1).
+- `hol/vc/`: procedure contracts, the procedure contract condition (thesis
+  Section 4.4), the encodings as first-order formulas, and end-to-end
+  soundness of the resulting verification conditions. See
+  [First-order encoding](#first-order-encoding).
 - `hol/ott*.sml`: Ott support library for HOL4, from HolBA
   (`examples/bir/compute/src/theory`).
 
@@ -56,11 +63,14 @@ Holmake
 ```
 
 Holmake regenerates `hol/tracesScript.sml` when `ott/traces.ott` is newer.
-This needs `ott` in your path.
+This needs `ott` in your path. The theories in `hol/fol` and `hol/vc` use
+`examples/logic/folcompactness` of the HOL4 distribution, which Holmake
+builds inside the HOL4 installation.
 
 Alternatively, build with [holbuild](https://github.com/hol-theorem-prover/holbuild).
-It fetches and builds the HOL4 commit pinned in `holbuild.toml` and does not
-run Ott:
+It fetches and builds the HOL4 commit pinned in `holbuild.toml`, with
+`folcompactness` as a dependency through the manifest in `shims/`, and does
+not run Ott:
 
 ```
 make hol/tracesScript.sml   # after changing ott/traces.ott
@@ -117,9 +127,9 @@ of the thesis: the trace constraints `tc(S)` hold for every effective trace
 of `S`, a trace whose effective trace satisfies the finite-trace calculus
 `ftc(S, φ)` is in `||φ||`, and validity of `tc(S) ⇒ ftc(S, φ)` implies
 `Str[[S]] ⊆ ||φ||`. The encodings are embedded shallowly, as predicates on
-state sequences `num -> state`; the first-order logic of Section 4.1 is not
-formalized. Several thesis definitions are corrected, and counterexamples
-show why; in particular, Theorem 4.29 and Lemma 4.30 fail with the thesis's
+state sequences `num -> state`; the first-order logic of Section 4.1 is
+formalized separately (see [First-order encoding](#first-order-encoding)).
+Several thesis definitions are corrected, and counterexamples show why; in particular, Theorem 4.29 and Lemma 4.30 fail with the thesis's
 `distr`, which distributes chop over conjunction. Examples of the thesis,
 among them the motivating Example 3.1 and Examples 4.31 and 4.32, are
 verified with the corrected definitions. `doc/verif.tex` (`make doc/verif.pdf`) describes the changes; the
@@ -156,6 +166,43 @@ table maps its numbered items to HOL4 names.
 | Theorem 8.3 (thesis Examples 4.31, 4.32) | `ex431_vc`, `ex431`, `ex432_weak_fails`, `ex432_vc`, `ex432` | `verifExamples` |
 | Proposition 8.4 (thesis Examples 4.12, 4.15, 4.18, 4.25) | `ex412`, `ex415`, `ex418`, `ex425` | `verifExamples` |
 | Chop lemmas | `IN_chop`, `chop_assoc`, `chop_union_l`, `chop_union_r`, `chop_restrict_l`, `chop_dup_l` | `verifChop` |
+
+## First-order encoding
+
+The directories `hol/fol` and `hol/vc` formalize the first-order logic of
+Section 4.1 of the thesis as a deep embedding, the procedure contract
+condition and Lemmas 4.35 and 4.36 of Section 4.4, and a conversion of a
+program, its contracts and a specification to first-order verification
+conditions. The end-to-end theorems state that if the verification
+conditions hold in the thesis's structure (integers and states), every
+trace of the program satisfies the specification; one version has states
+over the program variables and `Id`, `Sb` as conjunctions, as in the Z3
+encoding of the [tool accompanying the thesis](https://github.com/F200907/ftc-tool).
+`doc/fol.tex` (`make doc/fol.pdf`) describes the design and the relation
+to the thesis; the table maps its numbered items to HOL4 names.
+
+| Note | HOL4 name | Theory |
+|------|-----------|--------|
+| Definition 2.1 (string syntax) | `sterm`, `sform`, `smodel`, `stermval`, `sholds` | `folString` |
+| Theorem 2.2 (agreement with folcompactness) | `sform2form`, `smodel2model`, `sholds_holds`, `sholds_satisfies` | `folString` |
+| Definition 2.3 (thesis Def 4.1, 4.2) | `rec_fun`, `rec_pred`, `rec_model`, `int_const`, `svar`, `a2sterm`, `b2sform`, `Id_sform`, `Sb_sform`, `sforall_state` | `folRec` |
+| Lemma 2.4 | `stermval_a2sterm`, `sholds_b2sform`, `sholds_Id_sform`, `sholds_Sb_sform`, `sholds_sforall_state` | `folRec` |
+| Definition 3.1 (thesis Def 4.5, 4.6) | `ta`, `tb`, `ta_eval`, `tb_eval`, `cpre`, `cpost` | `vcContract` |
+| Definition 3.2 (thesis Def 4.34) | `pcc` | `vcPcc` |
+| Lemma 3.3 | `eff_tc_below` | `vcPcc` |
+| Lemma 3.4 | `pcc_sound` | `vcPcc` |
+| Theorem 3.5 | `pcc_conforms_set` | `vcPcc` |
+| Corollary 3.6 (thesis Lemma 4.35, 4.36) | `pcc_conforms_one`, `pcc_conforms`, `pcc_conforms_norm` | `vcPcc` |
+| Definition 4.1 | `stb`, `pred_fol`, `tc_fol`, `ftc_fol`, `ftc0_fol`, `pcc_fol`, `pcc_valid_fol`, `sforall_from`; shallow `ftc_dom`, `ftc_dom_univ` | `vcGen` |
+| Theorem 4.2 | `vagree`, `pred_fol_sem`, `tc_fol_sem`, `ftc_fol_sem`, `pcc_fol_sem`, `sholds_side_condition`, `sholds_pcc_valid_fol` | `vcGen` |
+| Definition 5.1 | `vc_main`, `vc_fols` | `vcSound` |
+| Theorem 5.2 | `sholds_vc_main`, `vc_fols_sound`, `vc_fols_sound_fol`, `satisfies_sholds` | `vcSound` |
+| Definition 6.1 | `xs_states`, `proj`, `svars`, `fvars`, `ct_over` | `vcXs` |
+| Lemma 6.2 | `tc_proj`, `ftc_proj`, `pcc_proj`, `pred_proj` | `vcXs` |
+| Definition 6.3 (thesis Def 4.1) | `Id_xs`, `Sb_xs`, `expand_atoms`, `vc_fols_xs`; `sholds_expand_atoms` | `vcXs` |
+| Theorem 6.4 | `vc_fols_sound_xs`, `vc_fols_xs_sound`, `vc_fols_xs_sound_fol` | `vcXs` |
+| Proposition 7.1 | `ct31_pcc_valid`, `ct31_conforms`, `ct_wrong_not_pcc_valid` | `vcExamples` |
+| Proposition 7.2 | `ex31_vc_fols`, `ex31_fol`, `ex31_xs_vc`, `ex31_xs`, `ex432_fol_weak_fails`, `ex432_fol` | `vcExamples` |
 
 ## Deviations from the paper
 

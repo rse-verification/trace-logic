@@ -1,0 +1,463 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2.8cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{stmaryrd}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\title{A Formalization of the First-Order Encoding of
+  ``Automated Verification of Finite-trace Properties for Recursive
+  Programs''\\[0.3em]
+  \large How the formalization relates to the thesis}
+\author{}
+\date{}
+
+% ---------------------------------------------------------------------------
+% Notation
+
+\newcommand{\sem}[1]{[\![ #1 ]\!]}
+\newcommand{\fsem}[1]{|\!|#1|\!|}
+\newcommand{\Str}{{\mathcal{S}_{\mathit{tr}}}}
+\newcommand{\chop}{\smallfrown}
+\newcommand{\Id}{\mathsf{Id}}
+\newcommand{\Sb}[2]{\mathsf{Sb}^{#1}_{#2}}
+\newcommand{\State}{\mathit{State}}
+\newcommand{\kw}[1]{\mathbf{#1}}
+\newcommand{\skipS}{\kw{skip}}
+\newcommand{\ite}[3]{\kw{if}\ #1\ \kw{then}\ #2\ \kw{else}\ #3}
+\newcommand{\call}[1]{#1()}
+\newcommand{\Pre}{\mathit{Pre}}
+\newcommand{\Post}{\mathit{Post}}
+\newcommand{\tc}{\mathrm{tc}}
+\newcommand{\ftc}{\mathrm{ftc}}
+\newcommand{\pred}{\mathrm{pred}}
+\newcommand{\pcc}{\mathrm{pcc}}
+\newcommand{\distr}{\mathrm{distr}}
+\newcommand{\expand}{\mathrm{expand}}
+\newcommand{\norm}{\mathrm{norm}}
+\newcommand{\stb}{\mathrm{stb}}
+\newcommand{\proj}{\pi}
+\newcommand{\vc}{\mathrm{vc}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\tsel}[1]{\mathsf{sel}_{#1}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\B}{\mathcal{B}}
+% A numbered item of the thesis [FS], e.g. \Th{Definition~4.8}.
+\newcommand{\Th}[1]{#1 of FS}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This note accompanies the HOL4 formalization of the first-order part of
+Chapter~4 of the master's thesis \emph{Automated Verification of
+Finite-trace Properties for Recursive Programs} by Stevanovic~\cite{FS}
+(henceforth FS). It builds on the formalization of the finite-trace
+calculus described in a companion note~\cite{V}, which treats $\tc$,
+$\ftc$ and \Th{Lemma~4.30} as predicates on state sequences. The
+formalization here covers
+\begin{itemize}
+\item the many-sorted first-order logic of \Th{Section~4.1}
+  (\Th{Definitions~4.1 and~4.2}), as a deep embedding;
+\item the implementation lemmas of \Th{Section~4.4}: the procedure contract
+  condition $\pcc$ (\Th{Definition~4.34}) and \Th{Lemmas~4.35 and~4.36}
+  (the normalization of \Th{Definition~4.33} is part of the companion
+  formalization);
+\item a conversion of a program, its procedure contracts and a trace
+  formula specification into first-order formulas, and an end-to-end
+  soundness theorem: if the formulas hold, every trace of the program
+  satisfies the specification.
+\end{itemize}
+The thesis states no end-to-end result. Its conversion is described by
+the encodings of Chapter~4 and, for the implementation, by
+\Th{Algorithms~1 and~2}.
+
+The first-order logic is the deep embedding of Harrison~\cite{JH}, as
+ported to HOL4 in the directory
+\[
+  \texttt{examples/logic/folcompactness}
+\]
+of the HOL4 distribution. There, predicate and function names are numbers.
+For readability, the formalization uses a copy of the syntax with string
+names, proved to have the same semantics.
+
+The noteworthy points, compared to the thesis, are:
+\begin{itemize}
+\item \emph{Truth in a structure, not validity.} The first-order logic of
+  the thesis has a fixed structure $\M$ (\Th{Definition~4.2}): integers
+  with their operations, and states over the program variables. A
+  verification condition must hold in $\M$ under every valuation; this is
+  what Z3 decides for the encoding of \Th{Section~5.1}. It is not
+  validity in all models (folcompactness's \texttt{valid}), which fails
+  for formulas about integers. The end-to-end theorems therefore assume
+  truth in $\M$, also stated as satisfaction in folcompactness's sense
+  (Theorems~\ref{thm:e2e} and~\ref{thm:e2e-xs}).
+\item \emph{Sorts.} The two sorts $\Z$ and $\State$ are encoded in the
+  one-sorted logic, with domain $\Z + \State$ and sort predicates that
+  relativize the quantifiers, as the thesis outlines in
+  \Th{Section~4.1}. Only states are quantified.
+\item \emph{States.} States stay total functions from variable names to
+  integers, as in the companion formalization; no finite maps are needed.
+  The thesis's states over the program variables $xs$ ($D_{\State} =
+  \Z^n$) are represented as the total states that are $0$ outside $xs$.
+  The thesis's remark that a state ``may return arbitrarily'' for an
+  undefined variable never matters, since $xs$ contains all variables of
+  the program, the specification and the contracts.
+\item \emph{Two versions of $\M$.} In the first, $\State$ denotes all
+  states, and $\Id$ and $\Sb{a}{x}$ are predicates interpreted as equality
+  and update (Section~\ref{sec:e2e}). In the second, $\State$ denotes the
+  states over $xs$, and $\Id$ and $\Sb{a}{x}$ are conjunctions over $xs$
+  as in \Th{Definition~4.1} and the Z3 encoding (Section~\ref{sec:xs}).
+  The second is reduced to the first by projecting states to $xs$.
+\item \emph{Contracts.} The companion formalization takes $\Pre_m$ and
+  $\Post_m$ as predicates; here they are syntax. A postcondition is a
+  Boolean expression over two states, in which $x_0$ denotes the initial
+  value of $x$ (Definition~\ref{def:contracts}).
+\item \emph{\Th{Lemma~4.36}.} The thesis proves it by merging all
+  procedures into one procedure $m^*$ with a fresh variable that selects
+  the body. The formalization proves it directly, by induction on the
+  length of traces for all procedures at once
+  (Theorem~\ref{thm:pcc-set}); \Th{Lemma~4.35} is an instance.
+\item \emph{Side conditions.} The side condition for a first call is a
+  closed formula: a block of universal quantifiers over the state
+  variables of the procedure body. It is part of the verification
+  condition. \Th{Algorithms~1 and~2} instead check it separately and
+  replace it by its truth value, which is equivalent because it is
+  closed; the formalization does not model the dependency graph.
+\item \emph{No capture-avoiding substitution.} The generators take the
+  index of the first state as a parameter, so no formula is ever shifted
+  by substitution, and the side conditions bind all their state variables.
+  Unfolding a fixed point substitutes a closed formula, for which the
+  substitution of the Ott definitions is correct.
+\end{itemize}
+
+Each numbered definition and result in this note corresponds to a HOL4
+definition or theorem in the directories \texttt{hol/fol} and
+\texttt{hol/vc}. The file \texttt{README.md} lists them by the numbers used
+here. References such as ``\Th{Definition~4.2}'' are to the thesis, and
+``Theorem~V.6.4'' to the companion note.
+
+\section{First-order logic}\label{sec:fol}
+
+\begin{definition}[string syntax]\label{def:fol}
+  Terms are variables $x$ and applications $f(t_1, \dots, t_n)$, formulas
+  are built from $\mathit{false}$, $\mathit{true}$, predicates
+  $P(t_1, \dots, t_n)$, the connectives $\neg, \land, \lor, \Rightarrow,
+  \Leftrightarrow$ and the quantifiers $\forall x, \exists x$, where
+  variables, functions and predicates are named by strings. A model has a
+  domain, and interprets function and predicate names. Truth of a formula
+  $F$ in a model $M$ under a valuation $v$ is written $M, v \models F$.
+\end{definition}
+
+\begin{theorem}\label{thm:fol}
+  Translating names to numbers and the connectives to
+  $\mathit{false}$, $\Rightarrow$ and $\forall$ maps the string syntax to
+  folcompactness, with $M, v \models F$ if and only if the translated model
+  satisfies the translated formula under the translated valuation.
+\end{theorem}
+
+\begin{definition}[\Th{Definitions~4.1 and~4.2}]\label{def:model}
+  For a set $D$ of states, the structure $\M_D$ has the domain
+  $\Z + D$ (integers and the states in $D$), the function symbols
+  \begin{itemize}
+  \item decimal numerals for the non-negative integers, $\mathsf{neg}$,
+    $+$, $-$, $\cdot$ on integers,
+  \item $\tsel{x}$ for each program variable $x$, the value $s(x)$ of $x$
+    in the state $s$,
+  \end{itemize}
+  and the predicate symbols $\mathsf{Int}$ and $\mathsf{State}$ (the
+  sorts, where $\mathsf{State}$ holds of the states in $D$), $=$ and $\le$,
+  $\Id(s, s')$ ($s' = s$) and $\Sb{}{x}(v, s, s')$ ($s' = s[x \mapsto v]$).
+  A function symbol applied to arguments of the wrong sort gives $0$, a
+  predicate symbol false. An arithmetic expression $a$ at a state term
+  $t$ becomes the integer term $\A\sem{a}(t)$, a Boolean expression $b$
+  the formula $\B\sem{b}(t)$, and $\forall s \in \State.\, F$ stands for
+  $\forall s.\, \mathsf{State}(s) \Rightarrow F$.
+\end{definition}
+
+As in \Th{Definition~4.2}, $\Sb{}{x}$ takes the value of $a$ as its
+first argument. $\M_{\mathit{UNIV}}$ has all states; $\M_{xs}$
+(Section~\ref{sec:xs}) the states over $xs$.
+
+\begin{lemma}
+  If a term $t$ denotes the state $s$ in $\M_D$ under $v$, then the term
+  $\A\sem{a}(t)$ denotes the integer $\A\sem{a}(s)$, and the formula
+  $\B\sem{b}(t)$ holds if and only if $\B\sem{b}(s)$, and similarly for $\Id$ and
+  $\Sb{a}{x}$. Moreover, $\forall s \in \State.\, F$ holds if and only if
+  $F$ holds for every $s \in D$.
+\end{lemma}
+
+\section{Contracts and the procedure contract condition}\label{sec:pcc}
+
+\begin{definition}[\Th{Definitions~4.5 and~4.6}]\label{def:contracts}
+  A contract table assigns procedures a contract $\langle \Pre_m,
+  \Post_m\rangle$, where $\Pre_m$ is a Boolean expression and $\Post_m$ a
+  Boolean expression over two states, with variables $x$ (final value) and
+  $x_0$ (initial value). A procedure without a contract has the contract
+  $\langle \mathit{true}, \mathit{true}\rangle$.
+\end{definition}
+
+\begin{definition}[\Th{Definition~4.34}]\label{def:pcc}
+  $\pcc_i(S, \phi)$, for $S$ in normal form, is defined by the equations of
+  \Th{Definition~4.34}, as a predicate on state sequences $g$, with the
+  initial state $s_0 = g(1)$ as a parameter. The cases the thesis leaves
+  undefined, in particular a conditional as the left operand of a
+  sequence, are false.
+\end{definition}
+
+Like $\tc$, $\pcc$ needs the normal form of Definition~V.4.1; procedure
+bodies are normalized before the condition is generated.
+
+\begin{lemma}\label{lem:tc-below}
+  \Th{Lemma~4.16} (Lemma~V.4.4) holds for a trace $\sigma$ when the
+  procedures conform with their contracts only for call traces not longer
+  than $\sigma$.
+\end{lemma}
+
+\begin{lemma}\label{lem:pcc-sound}
+  If $\tau$ is an effective trace of $S$ placed at $i$ in $g$, and $g$
+  satisfies $\tc_i(S)$ and $\pcc_i(S, \phi)$ with initial state $s_0$, then
+  $\phi(s_0, \mathit{last}(\tau))$ holds.
+\end{lemma}
+
+\begin{theorem}\label{thm:pcc-set}
+  Let $C$ be a set of procedures. If every procedure outside $C$ conforms
+  with its contract, and for every $m \in C$ with body $S_m$ in normal
+  form, $\Pre_m(g(1)) \Rightarrow \pcc_1(S_m, \Post_m)$ holds for every
+  $g$, then every procedure in $C$ conforms with its contract.
+\end{theorem}
+
+The proof is by induction on the length of the trace of the call. For a
+call of $m \in C$, the trace of the body is shorter, so the calls inside
+it conform by the induction hypothesis (for procedures in $C$) or by
+assumption; Lemma~\ref{lem:tc-below} then gives $\tc_1(S_m)$, and
+Lemma~\ref{lem:pcc-sound} the postcondition. This replaces the encoding of
+all procedures as one procedure $m^*$ in the thesis's proof of
+\Th{Lemma~4.36}, and handles mutual recursion directly.
+
+\begin{corollary}[\Th{Lemmas~4.35 and~4.36}]
+  With $C = \{m\}$, Theorem~\ref{thm:pcc-set} is \Th{Lemma~4.35}; with $C$
+  all procedures, it is \Th{Lemma~4.36}. For bodies in any shape, the
+  condition for the normalized bodies suffices.
+\end{corollary}
+
+\section{The encodings as formulas}\label{sec:gen}
+
+The generators produce formulas whose free variables are the state
+variables $s(k)$.
+
+\begin{definition}\label{def:gen}
+  The formulas $\pred_i(\phi)$, $\tc_i(S)$, $\ftc_i(S, \phi, X)$ and
+  $\pcc_i(S, \Post_m)$ follow \Th{Definitions~4.17, 4.13, 4.28 and~4.34},
+  clause by clause, with fuel as in the companion formalization. The side
+  condition for a first call of $m$ with body $S_m$ is
+  \[
+    \forall s(1), \dots, s(N) \in \State.\;
+      \tc_1(S_m) \land \Pre_m(s(1)) \Rightarrow
+      \ftc_1(S_m, \psi[\mu X_m.\psi/X_m], (m, \psi) :: X),
+  \]
+  where $N = 1 + \stb(S_m)$, and $\stb(S)$ bounds the number of state
+  variables after the first that a statement's formulas mention.
+\end{definition}
+
+With $\State$ restricted to $D$, a side condition only quantifies over
+sequences in $D$. Its shallow counterpart is $\ftc^D$, which is $\ftc$
+with the side condition restricted to sequences $h$ with $h(j) \in D$ for
+$1 \le j \le N$; $\ftc^{\mathit{UNIV}} = \ftc$.
+
+\begin{theorem}\label{thm:gen}
+  Let the valuation $v$ map $s(k)$ to $g(k)$ for $i \le k \le i + \stb(S)$.
+  Then $\M_D, v \models \tc_i(S)$ if and only if $g$ satisfies
+  $\tc_i(S)$, and $\M_D, v \models \ftc_i(S, \phi, X)$ if and only if
+  $g$ satisfies $\ftc^D_i(S, \phi, X)$; similarly for $\pred$ and $\pcc$.
+\end{theorem}
+
+The hypothesis only constrains the indices the formula mentions. This is
+what makes a block of quantifiers $\forall s(1), \dots, s(N)$ correspond to
+a quantifier $\forall h$ over state sequences, without a separate lemma
+about which indices $\tc$ and $\ftc$ depend on.
+
+\section{Conversion and end-to-end soundness}\label{sec:e2e}
+
+\begin{definition}\label{def:vc}
+  For a statement $S$, a procedure table $T$ (a list of procedure
+  definitions), contracts and a trace formula $\phi$, with fuel $n$, the
+  verification conditions $\vc(T, S, \phi)$ are
+  \begin{itemize}
+  \item the main condition
+    $\forall s(1), \dots, s(N) \in \State.\; \tc_1(S') \Rightarrow
+    \ftc^n_1(S', \phi, [\,])$, where $S' = \norm(S)$, $N = 1 + \stb(S')$,
+    and the procedure bodies are normalized;
+  \item for each $m\{S_m\} \in T$, the contract condition
+    $\forall s(1), \dots, s(N) \in \State.\; \Pre_m(s(1)) \Rightarrow
+    \pcc_1(\norm(S_m), \Post_m)$.
+  \end{itemize}
+\end{definition}
+
+\begin{theorem}\label{thm:e2e}
+  Let $\phi$ be closed. If every formula of $\vc(T, S, \phi)$ holds in
+  $\M_{\mathit{UNIV}}$ under every valuation, then $\Str\sem{S} \subseteq
+  \fsem{\phi}$. The same holds with the formulas translated to
+  folcompactness, satisfied by the translated structure.
+\end{theorem}
+
+The proof combines Theorem~\ref{thm:gen} with \Th{Lemma~4.36} for the
+contracts and \Th{Lemma~4.30} (Theorem~V.6.4) for the main condition. No
+hypothesis remains about the conformance of procedures or the shape of
+$S$ and $T$.
+
+\section{States over the program variables}\label{sec:xs}
+
+\begin{definition}\label{def:xs}
+  For a list $xs$ of program variables, the states over $xs$ are the
+  states that are $0$ outside $xs$; $\M_{xs}$ is $\M_D$ for this set $D$.
+  The projection $\proj_{xs}(s)$ keeps the values of $xs$ in $s$ and is
+  $0$ elsewhere.
+\end{definition}
+
+The states over $xs$ correspond one-to-one to $\Z^{xs}$, the thesis's
+$D_{\State}$ and the Z3 record type of \Th{Section~5.1}.
+
+\begin{lemma}\label{lem:proj}
+  Let $S$, the procedure bodies, $\phi$ and the contracts only mention
+  variables in $xs$.
+  \begin{itemize}
+  \item If $g$ satisfies $\tc_i(S)$, so does $\proj_{xs} \circ g$.
+  \item If $g$ satisfies $\tc_i(S)$ and $\proj_{xs} \circ g$ satisfies
+    $\ftc^{xs}_i(S, \phi, X)$, then $g$ satisfies $\ftc_i(S, \phi, X)$.
+  \item If $\proj_{xs} \circ g$ satisfies $\pcc_i(S, \phi)$, so does $g$.
+  \end{itemize}
+\end{lemma}
+
+The second item is the key: $\pred$ is only applied to the steps that
+$\tc$ constrains, and these do not change variables outside $xs$, so
+$\Id$ and $\Sb{a}{x}$ hold of the step if and only if they hold of its
+projection. Across a call, the contract may allow other variables to
+change, but $\ftc$ applies no $\pred$ there. The side conditions follow by
+induction, since a sequence satisfying $\tc$ projects to one that
+satisfies it.
+
+\begin{definition}[\Th{Definition~4.1}]\label{def:expand}
+  $\Id_{xs}(t, t')$ is $\mathsf{State}(t) \land \mathsf{State}(t') \land
+  \bigwedge_{y \in xs} \tsel{y}(t) = \tsel{y}(t')$, and
+  $\Sb{}{x,xs}(v, t, t')$ is $\mathsf{State}(t) \land \mathsf{State}(t')
+  \land \tsel{x}(t') = v \land \bigwedge_{y \in xs \setminus \{x\}}
+  \tsel{y}(t') = \tsel{y}(t)$. $\vc_{xs}(T, S, \phi)$ is $\vc(T, S,
+  \phi)$ with $\Id$ and $\Sb{}{x}$ ($x \in xs$) replaced by these.
+\end{definition}
+
+This is the encoding of the functions \texttt{id} and \texttt{sb\_x} of
+\Th{Examples~5.3 and~5.4}, with the sorts made explicit. On the states over
+$xs$, the expanded formulas mean the same as the original ones.
+
+\begin{theorem}\label{thm:e2e-xs}
+  Let $\phi$ be closed, and let $S$, the procedure bodies, $\phi$ and the
+  contracts only mention variables in $xs$. If every formula of
+  $\vc_{xs}(T, S, \phi)$ holds in $\M_{xs}$ under every valuation into
+  its domain, then $\Str\sem{S} \subseteq \fsem{\phi}$. The same holds
+  with satisfaction in folcompactness.
+\end{theorem}
+
+Unlike Theorem~\ref{thm:e2e}, the hypothesis here is about the structure
+that the Z3 encoding describes: integers, and states as tuples over $xs$.
+That Z3 decides truth in this structure, for the SMT-LIB text the tool
+produces, is not formalized.
+
+\section{Examples}\label{sec:examples}
+
+The procedure is $m\{\ite{x \le 0}{x := 0}{(x := x - 1; \call{m})}\}$ of
+\Th{Examples~3.1, 4.31 and~4.32} (companion note, Section~V.8).
+
+\begin{proposition}\label{prop:ex-pcc}
+  The contract $\langle \mathit{true}, x = 0 \land y = y_0\rangle$ of
+  \Th{Example~3.1} satisfies the contract condition, hence $m$ conforms
+  with it; the contract $\langle\mathit{true}, y = y_0 + 1\rangle$ does
+  not satisfy it.
+\end{proposition}
+
+\begin{proposition}\label{prop:ex-e2e}
+  \leavevmode
+  \begin{itemize}
+  \item \Th{Example~3.1}: the verification conditions hold in
+    $\M_{\mathit{UNIV}}$, and, with $\Id$ and $\Sb{}{x}$ over $xs = [x,
+    y]$, in $\M_{xs}$; both end-to-end theorems give $\Str\sem{S}
+    \subseteq \fsem{\phi}$.
+  \item \Th{Example~4.32}: with the contract $x = 0$, the main condition
+    does not hold in $\M_{\mathit{UNIV}}$, for any fuel; with $x = 0
+    \land z = z_0$, the verification conditions hold, and the
+    specification follows.
+  \end{itemize}
+\end{proposition}
+
+The generated formulas are readable. For instance, for $xs = [x, y]$,
+the step $y := x$ from $s(1)$ to $s(2)$ becomes
+$\mathsf{State}(s1) \land \mathsf{State}(s2) \land \tsel{y}(s2) =
+\tsel{x}(s1) \land \tsel{x}(s2) = \tsel{x}(s1)$.
+
+\section{Notes on the proofs}\label{sec:notes}
+
+Some points that made the proofs work, or that cost time:
+\begin{itemize}
+\item \emph{Equivalence instead of re-proving soundness.} Each generator is
+  shown equivalent to its shallow counterpart (Theorem~\ref{thm:gen}), so
+  the soundness proofs of the companion formalization are reused unchanged.
+\item \emph{Index ranges.} Stating the equivalences for valuations that
+  agree with $g$ on an index range, rather than on all indices, gives the
+  quantifier blocks of the side conditions for free.
+\item \emph{Domain of $\M_D$.} Restricting the domain to $\Z + D$, and
+  making ill-sorted function applications return $0$ rather than an
+  arbitrary value, keeps every term in the domain. This is needed for the
+  expansion of $\Id$ and $\Sb{}{x}$, which is only equivalent on states in
+  $D$.
+\item \emph{Proof automation.} The proofs of the equivalences are short
+  because of a few ML tactics: deriving the value of each $s(k)$ in the
+  goal from the agreement hypothesis, discharging index arithmetic with
+  $1 \le \stb(S)$, and adding only the instantiated equivalences for the
+  atoms. Adding both directions of each equivalence instead made the
+  simplifier rewrite back and forth until the tactic timeout.
+\item \emph{HOL4 gotchas.} With \texttt{intLib} loaded, an unannotated
+  numeral is an integer, which silently made $\stb$ integer-valued. The
+  simplifier evaluates string tests on literals, such as whether a name
+  starts with \texttt{Sb\_}, into nested case expressions; a separate
+  definition with one characterizing lemma avoids this. A free variable
+  named \texttt{F} in a quotation is falsity.
+\end{itemize}
+
+\section{What is not formalized}
+
+Not formalized are the SMT-LIB text and Z3 itself, the dependency graph of
+\Th{Algorithms~1 and~2}, and completeness. The proof-of-concept tool
+differs from the thesis in some details that the formalization follows the
+thesis in: it recognizes a recursive call by the recursion variable alone,
+not by the pair $(X_m, \psi)$; its contract condition does not duplicate
+the state at a call; and it supports read statements and relations that
+the language of GH does not have.
+
+\begin{thebibliography}{GH}
+\bibitem[FS]{FS} F.~Stevanovic. \emph{Automated Verification of Finite-trace
+  Properties for Recursive Programs}. Master's thesis, KTH Royal Institute
+  of Technology, 2025.
+\bibitem[GH]{GH} D.~Gurov and R.~H\"ahnle. \emph{An Expressive Trace Logic
+  for Recursive Programs}.
+  \url{https://arxiv.org/abs/2411.13125}.
+\bibitem[JH]{JH} J.~Harrison. \emph{Formalizing Basic First Order Model
+  Theory}. TPHOLs 1998, LNCS 1479.
+\bibitem[V]{V} \emph{A Formalization of the Finite-Trace Calculus of
+  ``Automated Verification of Finite-trace Properties for Recursive
+  Programs''}. Note in this repository (\texttt{doc/verif.tex}).
+\end{thebibliography}
+
+\end{document}

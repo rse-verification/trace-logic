@@ -1,0 +1,9 @@
+[holbuild]
+schema = 2
+minimum_version = "0.12.0"
+
+[project]
+name = "hol_folcompactness"
+
+[build]
+members = ["."]

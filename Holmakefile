@@ -1,6 +1,6 @@
 CLINE_OPTIONS = -r
 
-INCLUDES = hol hol/verif
+INCLUDES = hol hol/verif hol/fol hol/vc
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

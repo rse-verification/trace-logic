@@ -14,6 +14,12 @@ notes below apply to any Ott + HOL4 formalization.
   `INCLUDES` in the root `Holmakefile` for Holmake, and to `members` in
   `holbuild.toml` for holbuild. It also needs its own `Holmakefile` with
   `INCLUDES = ..` to see the theories in `hol`.
+- Theories from HOL's `examples` (e.g. `examples/logic/folcompactness`) are
+  not in HOL's sigobj. For Holmake, add `$(HOLDIR)/examples/...` to
+  `INCLUDES` of each directory that uses them; Holmake then builds them
+  inside the HOL installation. For holbuild, declare a dependency with
+  `from = "hol"`, the `path`, and a `manifest` in `shims/`, since the
+  example has no `holbuild.toml` of its own.
 - `holbuild build` builds against the HOL4 commit pinned in `holbuild.toml`.
   `rev` must be the commit of the tag (`git ls-remote
   https://github.com/HOL-Theorem-Prover/HOL.git 'refs/tags/<tag>^{}'`), not the
@@ -47,6 +53,12 @@ notes below apply to any Ott + HOL4 formalization.
   `printf 'load "fooTheory"; open fooTheory;\nprint_thm bar;\n' | holbuild repl`.
   Check how a generated constant and its rules look before proving anything
   about them.
+- A REPL session has no tactic timeout, and a diverging `EVAL` can use
+  15 GB of memory or more. Bound it:
+  `printf '...' | (ulimit -v 4000000; timeout 120 hol)`. Load the libraries
+  the theory uses (e.g. `intLib`) before `EVAL`: without `intLib`, `EVAL`
+  cannot decide `0 <= -3`, evaluates both branches of the conditional, and
+  `toString` on an unreduced argument unfolds forever.
 
 ## Ott to HOL4 export
 
@@ -130,5 +142,19 @@ notes below apply to any Ott + HOL4 formalization.
   places. Read the goal holbuild prints first, or select and name things by
   pattern: `>~ [`fsem relI (f_chop f1 f2)`]` picks the goal and renames its
   variables, `qmatch_goalsub_rename_tac` names subterms of the goal.
+- With `intLib` loaded (`Libs intLib`), an unannotated numeral defaults to
+  `int`. A definition like `stb S_skip = 1` then gets type `S -> int`, and
+  `decide_tac` fails on it. Annotate: `stb S_skip = 1:num`.
+- `CONV_TAC FUN_EQ_CONV >> gen_tac` may name the new variable unexpectedly
+  (e.g. `l` for a string argument); name it with `qx_gen_tac` before
+  referring to it.
+- `imp_res_tac` on an equivalence `A ==> (B <=> C)` adds `B <=> C` and both
+  implications; `fs` can then rewrite back and forth until the tactic
+  timeout. Add only the equivalence, e.g. with `MATCH_MP` on the known
+  premises.
+- `rw`/`fs` evaluate string tests on literals such as `isPREFIX "Sb_" p` into
+  nested `case p of ...` terms, which later rewrites no longer match. Put
+  the test in a small definition (e.g. `sb_name p`) with one characterizing
+  lemma (`sb_name p = SOME x <=> p = "Sb_" ++ x`), and case split on it.
 - Do not rewrite with `GSYM LIST_TO_SET_EQ_EMPTY` in `fs`: it loops. To show
   `l = []` from facts about `set l`, use `Cases_on `l`` and `EXTENSION`.
