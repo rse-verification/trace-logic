@@ -1,7 +1,7 @@
 # Trace logic for recursive programs in HOL4
 
 A HOL4 formalization of parts of D. Gurov and R. Hähnle, [An Expressive
-Trace Logic for Recursive Programs](https://arxiv.org/abs/2411.13125),
+Trace Logic for Recursive Programs](https://doi.org/10.48550/arXiv.2411.13125),
 up to soundness of the proof calculus (Theorem 5.6), together with the
 characterisation of strongest trace formulas (Theorem 4.9) and the example
 derivation of Figure 6.
@@ -46,8 +46,8 @@ and the first-order encoding with end-to-end soundness (see
   paper, how the formalization differs from it. The table under
   [Note to HOL4](#note-to-hol4) maps its numbered items to HOL4 names.
 - `hol/verif/`: formalization of the soundness results of Chapter 4 of
-  F. Stevanovic, *Automated Verification of Finite-trace Properties for
-  Recursive Programs* (master's thesis, KTH, 2025), on top of the theories
+  F. Stevanovic, [*Automated Verification of Finite-trace Properties for
+  Recursive Programs*](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-368044) (master's thesis, KTH, 2025), on top of the theories
   above. See [Finite-trace calculus](#finite-trace-calculus).
 - `hol/fol/`: first-order logic with string names, proved equivalent to the
   deep embedding of HOL4's `examples/logic/folcompactness`, and the
