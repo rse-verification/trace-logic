@@ -59,6 +59,16 @@ notes below apply to any Ott + HOL4 formalization.
   the theory uses (e.g. `intLib`) before `EVAL`: without `intLib`, `EVAL`
   cannot decide `0 <= -3`, evaluates both branches of the conditional, and
   `toString` on an unreduced argument unfolds forever.
+- To see which goals a draft proof leaves, end it with `NO_TAC`, not
+  `cheat`: holbuild then fails at that step and prints the remaining goals
+  (with `cheat` the theory just builds). After adding a theory, rebuild it
+  from scratch (`holbuild clean <theory>Theory`) with a short tactic
+  timeout (15–30 s) to find slow tactics before they approach the limit.
+- `holbuild repl` may fail to load theories that use `intLib` (seen after
+  `Holmake cleanAll`: `Cannot find file .../hol/sigobj/OmegaTheory.ui` in
+  holbuild's toolchain cache). Then run `Holmake` and use the plain `hol`
+  of the HOL4 installation, started in the theory's directory so it picks
+  up the `Holmakefile`, and `load "intLib"` before the theory.
 
 ## Ott to HOL4 export
 
