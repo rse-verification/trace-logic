@@ -1,22 +1,29 @@
 # Trace logic for recursive programs in HOL4
 
-A HOL4 formalization of parts of D. Gurov and R. Hähnle, [An Expressive
-Trace Logic for Recursive Programs](https://doi.org/10.48550/arXiv.2411.13125),
-up to soundness of the proof calculus (Theorem 5.6), together with the
-characterisation of strongest trace formulas (Theorem 4.9) and the example
-derivation of Figure 6.
+This repository formalizes in HOL4 core parts of the paper [An Expressive
+Trace Logic for Recursive Programs](https://doi.org/10.48550/arXiv.2411.13125)
+by D. Gurov and R. Hähnle. This includes the Rec programming language,
+a trace logic for specifying Rec programs, and corresponding semantics.
+The formalization goes up to the soundness of the proof calculus (Theorem 5.6),
+together with the characterisation of strongest trace formulas (Theorem 4.9)
+and the example derivation of Figure 6 (see `doc/note.tex` and the table
+under [Note to HOL4](#note-to-hol4)).
 
-On top of this formalization, reusing its language, semantics and trace
-logic, the repository also formalizes Chapter 4 of F. Stevanovic,
-[Automated Verification of Finite-trace Properties for Recursive
-Programs](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-368044)
-(master's thesis, KTH, 2025), which verifies Rec programs against trace
+On top of this formalization, reusing its language, trace logic, and semantics,
+the repository also formalizes Chapter 4 of the master's thesis of
+F. Stevanovic, [Automated Verification of Finite-trace Properties for
+Recursive Programs](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-368044)
+(KTH, 2025), which verifies Rec programs against trace
 formulas by reduction to first-order validity: the soundness of the
 finite-trace calculus (see [Finite-trace calculus](#finite-trace-calculus)),
 and the first-order encoding with end-to-end soundness (see
 [First-order encoding](#first-order-encoding)).
 
-## Layout
+## File layout
+
+The Ott file and the theories directly in `hol/` (apart from the Ott support
+library) formalize the paper; the directories `hol/verif`, `hol/fol` and
+`hol/vc` formalize the thesis.
 
 - `ott/traces.ott`: syntax of Rec and of trace formulas, the SOS (Figure 1),
   SOS-induced traces (Definition 2.6), and the proof calculus (Figure 5 plus
@@ -46,18 +53,16 @@ and the first-order encoding with end-to-end soundness (see
   paper, how the formalization differs from it. The table under
   [Note to HOL4](#note-to-hol4) maps its numbered items to HOL4 names.
 - `hol/verif/`: formalization of the soundness results of Chapter 4 of
-  F. Stevanovic, [*Automated Verification of Finite-trace Properties for
-  Recursive Programs*](https://urn.kb.se/resolve?urn=urn%3Anbn%3Ase%3Akth%3Adiva-368044) (master's thesis, KTH, 2025), on top of the theories
-  above. See [Finite-trace calculus](#finite-trace-calculus).
+  the thesis, on top of the theories above. See
+  [Finite-trace calculus](#finite-trace-calculus).
 - `hol/fol/`: first-order logic with string names, proved equivalent to the
   deep embedding of HOL4's `examples/logic/folcompactness`, and the
   structure of the thesis's first-order logic (Section 4.1).
-- `hol/vc/`: procedure contracts, the procedure contract condition (thesis
-  Section 4.4), the encodings as first-order formulas, and end-to-end
+- `hol/vc/`: procedure contracts, the procedure contract condition
+  (thesis Section 4.4), the encodings as first-order formulas, and end-to-end
   soundness of the resulting verification conditions. See
   [First-order encoding](#first-order-encoding).
-- `hol/ott*.sml`: Ott support library for HOL4, from HolBA
-  (`examples/bir/compute/src/theory`).
+- `hol/ott*.sml`: Ott support library for HOL4.
 
 ## Building
 
@@ -129,6 +134,80 @@ theorems. Theory `traces` is generated from the Ott file.
 | Theorem 6.1 (paper Ex 5.2, Fig 6) | `even_stf_derivable`, `even_stf_valid`, `even_stf_valid_sos`; (Cons) steps `if_then_ent`, `if_else_ent`, `odd_call_ent`, `even_var_ent` | `evenOddExample` |
 | Remark 6.2 | `even_stf_derivable_short` | `evenOddExample` |
 | Figure 2 (SOS) | `c_red`, `sos_tr`, `Ssos` | `traces`, `tracesSos` |
+
+## Deviations from the paper
+
+- **Validity of sequents (Definition 5.4).** The paper's definition makes the
+  (Call) rule unsound for a non-empty antecedent:
+  `original_validity_counterexample` derives `Y_m1 : false ⊢ m() : Id⌢Id⌢false`
+  for `T = {m {m1()}, m1 {skip}}`, which is invalid. The corrected `valid`
+  interprets procedures `m` with `Y_m ∈ dom Γ` as their continuation
+  `skip;Y_m`, and the other procedures by the least fixed point relative to
+  these. For `Γ = ∅` the two definitions coincide (`valid_orig_empty`).
+  Soundness is proved for all sequents w.r.t. the corrected definition. For
+  `Γ = ∅` that gives the paper's statement, both for the denotational
+  semantics and, via Theorem 3.2, for the SOS.
+- **Multiple procedures.** The proof of (Call) does fixed-point induction on
+  the whole procedure system at once (`call_fixpoint_induction`), instead of
+  the paper's single-procedure argument plus Bekič's principle.
+- **Antecedents.** Γ contains only judgments `Y : φ` about statement variables.
+  `Y_m` is identified with the name `m`. The (Call) side condition is
+  `Y_m ∉ dom Γ` rather than `Y_m : φ_m ∉ Γ`.
+- **Structural rules.** The paper omits them. The calculus has (Ax), (Weak),
+  (Cut), (∧R), (∧L) and (ConsL). Weakening and cut must preserve `dom Γ`,
+  because the corrected semantics depends on `dom Γ`. ∨L is unsound for trace
+  judgments and is not included.
+- **(Cons)** takes an entailment oracle `E` as a parameter of the calculus.
+  Soundness assumes `ent_sound`: E only answers yes for semantically valid
+  entailments.
+- **(Unfold)** requires `µX.φ` to be closed, so that Ott's substitution
+  (which is not capture-avoiding) agrees with semantic substitution. Judgment
+  formulas are otherwise not required to be closed; open variables are
+  interpreted as `∅`.
+
+  Plain substitution is enough here. (Unfold) is the only rule that
+  substitutes, and it only substitutes the formula `µX.φ` itself. When that
+  formula is closed, nothing can be captured, so plain and capture-avoiding
+  substitution give the same result (up to renaming of bound variables). The
+  side condition costs nothing for the paper's derivations: Definition 5.1
+  requires judgment formulas to be closed, and the body of a closed `µX.φ`
+  has no free variables other than `X`. The strongest trace formulas
+  `stf(∅, S)` used for completeness (Theorem 5.7) are closed as well.
+  Capture-avoiding substitution would only matter for rules that substitute
+  open formulas, such as the fixed-point induction rule for entailment in
+  Section 8.
+- **Procedure tables** are association lists, looked up with `ALOOKUP`
+  (first match), so duplicate names need no well-formedness side condition.
+  Soundness and Theorem 3.2 assume that procedure bodies contain no statement
+  variables (`tbl_var_free`).
+- **States** are total functions `string -> int`. Arithmetic and Boolean
+  expressions are concrete (as in the earlier Ott file). Other relation
+  symbols `Q` are interpreted by a parameter `relI`.
+- **Strongest trace formulas (Definition 4.6).** The recursion variable
+  `X_m` is named `m`, as `Y_m` is, and the set X of Figure 4 is a list.
+  Termination is by the number of declared procedures not in X, then by the
+  size of S. For a statement variable `Y`, `stf(Y) = X_Y`. Theorem 4.9 is
+  proved for programs without statement variables, as for soundness. Its
+  proof does not use modal equation systems (Appendix A.2). Instead,
+  `stf_sem_ovr` generalizes it to open formulas: with the procedures in X
+  treated as statement variables (as in the corrected validity), `stf(X, S)`
+  denotes the traces of S. The case of a call is one step of Bekič's
+  principle (`rho0_bekic`). Corollary 5.5 is proved as an equivalence:
+  `S : φ` is valid iff `stf(S)` entails φ.
+- **Examples 4.7 and 4.8.** With the naming above, the formulas are those of
+  the paper, with chop associated to the right, as Definition 4.6 builds it.
+  In Example 4.8, `x > 0` is written `¬(x ≤ 0)`, since Boolean expressions
+  have no `>`, and so `x ≤ 0` appears as `¬¬(x ≤ 0)`.
+- **Example 5.2 / Figure 6.** The oracle for (Cons) is semantic entailment
+  (`sem_ent`). The derivation follows Figure 6, with explicit steps in place
+  of the vertical dots. Each of the two (Cons) steps at `odd()` and `Y_even`
+  relates a strongest trace formula to its unfolding; both formulas have the
+  same semantics by Theorem 4.9 and the unfolding lemmas (`stf_unfold_Str`,
+  `stf_unfold_mu`). The other (Cons) steps are the premises of (If). Their
+  entailments hold for any formulas of the shape `(b ∧ Id⌢F₁) ∨ (¬b ∧
+  Id⌢F₂)` (`if_then_ent`, `if_else_ent`). A shorter derivation
+  (`even_stf_derivable_short`) uses the unfolded formula as the contract for
+  `odd()`, which makes the two (Cons) steps unnecessary.
 
 ## Finite-trace calculus
 
@@ -219,77 +298,3 @@ to the thesis; the table maps its numbered items to HOL4 names.
 | Proposition 7.1 | `ct31_pcc_valid`, `ct31_conforms`, `ct_wrong_not_pcc_valid` | `vcExamples` |
 | Proposition 7.2 | `ex31_vc_fols`, `ex31_fol`, `ex31_xs_vc`, `ex31_xs`, `ex432_fol_weak_fails`, `ex432_fol` | `vcExamples` |
 | Proposition 7.3 (thesis Section 5.4, Examples 5.5, 5.6, 5.8, 5.10, 5.12) | `ex55_tc_shape`, `ex55`, `ex55_xs`, `ex56_rejected`, `ex56_violation`, `ex58`, `ex58_xs`, `ex510`, `ex510_xs`, `ex512`, `ex512_xs` (via `vc_fols_of_shallow`, `vc_fols_xs_of_shallow`) | `vcEval` |
-
-## Deviations from the paper
-
-- **Validity of sequents (Definition 5.4).** The paper's definition makes the
-  (Call) rule unsound for a non-empty antecedent:
-  `original_validity_counterexample` derives `Y_m1 : false ⊢ m() : Id⌢Id⌢false`
-  for `T = {m {m1()}, m1 {skip}}`, which is invalid. The corrected `valid`
-  interprets procedures `m` with `Y_m ∈ dom Γ` as their continuation
-  `skip;Y_m`, and the other procedures by the least fixed point relative to
-  these. For `Γ = ∅` the two definitions coincide (`valid_orig_empty`).
-  Soundness is proved for all sequents w.r.t. the corrected definition. For
-  `Γ = ∅` that gives the paper's statement, both for the denotational
-  semantics and, via Theorem 3.2, for the SOS.
-- **Multiple procedures.** The proof of (Call) does fixed-point induction on
-  the whole procedure system at once (`call_fixpoint_induction`), instead of
-  the paper's single-procedure argument plus Bekič's principle.
-- **Antecedents.** Γ contains only judgments `Y : φ` about statement variables.
-  `Y_m` is identified with the name `m`. The (Call) side condition is
-  `Y_m ∉ dom Γ` rather than `Y_m : φ_m ∉ Γ`.
-- **Structural rules.** The paper omits them. The calculus has (Ax), (Weak),
-  (Cut), (∧R), (∧L) and (ConsL). Weakening and cut must preserve `dom Γ`,
-  because the corrected semantics depends on `dom Γ`. ∨L is unsound for trace
-  judgments and is not included.
-- **(Cons)** takes an entailment oracle `E` as a parameter of the calculus.
-  Soundness assumes `ent_sound`: E only answers yes for semantically valid
-  entailments.
-- **(Unfold)** requires `µX.φ` to be closed, so that Ott's substitution
-  (which is not capture-avoiding) agrees with semantic substitution. Judgment
-  formulas are otherwise not required to be closed; open variables are
-  interpreted as `∅`.
-
-  Plain substitution is enough here. (Unfold) is the only rule that
-  substitutes, and it only substitutes the formula `µX.φ` itself. When that
-  formula is closed, nothing can be captured, so plain and capture-avoiding
-  substitution give the same result (up to renaming of bound variables). The
-  side condition costs nothing for the paper's derivations: Definition 5.1
-  requires judgment formulas to be closed, and the body of a closed `µX.φ`
-  has no free variables other than `X`. The strongest trace formulas
-  `stf(∅, S)` used for completeness (Theorem 5.7) are closed as well.
-  Capture-avoiding substitution would only matter for rules that substitute
-  open formulas, such as the fixed-point induction rule for entailment in
-  Section 8.
-- **Procedure tables** are association lists, looked up with `ALOOKUP`
-  (first match), so duplicate names need no well-formedness side condition.
-  Soundness and Theorem 3.2 assume that procedure bodies contain no statement
-  variables (`tbl_var_free`).
-- **States** are total functions `string -> int`. Arithmetic and Boolean
-  expressions are concrete (as in the earlier Ott file). Other relation
-  symbols `Q` are interpreted by a parameter `relI`.
-- **Strongest trace formulas (Definition 4.6).** The recursion variable
-  `X_m` is named `m`, as `Y_m` is, and the set X of Figure 4 is a list.
-  Termination is by the number of declared procedures not in X, then by the
-  size of S. For a statement variable `Y`, `stf(Y) = X_Y`. Theorem 4.9 is
-  proved for programs without statement variables, as for soundness. Its
-  proof does not use modal equation systems (Appendix A.2). Instead,
-  `stf_sem_ovr` generalizes it to open formulas: with the procedures in X
-  treated as statement variables (as in the corrected validity), `stf(X, S)`
-  denotes the traces of S. The case of a call is one step of Bekič's
-  principle (`rho0_bekic`). Corollary 5.5 is proved as an equivalence:
-  `S : φ` is valid iff `stf(S)` entails φ.
-- **Examples 4.7 and 4.8.** With the naming above, the formulas are those of
-  the paper, with chop associated to the right, as Definition 4.6 builds it.
-  In Example 4.8, `x > 0` is written `¬(x ≤ 0)`, since Boolean expressions
-  have no `>`, and so `x ≤ 0` appears as `¬¬(x ≤ 0)`.
-- **Example 5.2 / Figure 6.** The oracle for (Cons) is semantic entailment
-  (`sem_ent`). The derivation follows Figure 6, with explicit steps in place
-  of the vertical dots. Each of the two (Cons) steps at `odd()` and `Y_even`
-  relates a strongest trace formula to its unfolding; both formulas have the
-  same semantics by Theorem 4.9 and the unfolding lemmas (`stf_unfold_Str`,
-  `stf_unfold_mu`). The other (Cons) steps are the premises of (If). Their
-  entailments hold for any formulas of the shape `(b ∧ Id⌢F₁) ∨ (¬b ∧
-  Id⌢F₂)` (`if_then_ent`, `if_else_ent`). A shorter derivation
-  (`even_stf_derivable_short`) uses the unfolded formula as the contract for
-  `odd()`, which makes the two (Cons) steps unnecessary.

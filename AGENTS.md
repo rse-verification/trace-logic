@@ -1,9 +1,11 @@
 # Trace logic for recursive programs in HOL4 - Notes for agents
 
-This repository formalizes a paper in HOL4, with syntax, operational semantics
-and proof rules written in Ott and exported to HOL4. See `README.md` for the
-layout, the main theorems, and the deviations from the paper. Most of the
-notes below apply to any Ott + HOL4 formalization.
+This repository formalizes a paper, and a thesis building on it, in HOL4.
+For the paper, the syntax, operational semantics and proof rules are written
+in Ott and exported to HOL4. The formalization of the thesis (`hol/verif`,
+`hol/fol`, `hol/vc`) is written directly in HOL4. See `README.md` for the
+layout, the main theorems, and the deviations from the paper and the thesis.
+Most of the notes below apply to any Ott + HOL4 formalization.
 
 ## Building
 
