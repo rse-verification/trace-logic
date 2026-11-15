@@ -55,6 +55,13 @@ Most of the notes below apply to any Ott + HOL4 formalization.
 - A theory built with a short timeout is reused by later builds with a longer
   timeout. So a plain `holbuild build` afterwards may do nothing; use a clean
   Holmake build as the final check.
+- Besides the project-local `.holbuild`, holbuild keeps a shared cache in
+  `~/.cache/holbuild` (override with `--cache-dir`): built HOL toolchains,
+  checkpoints and theory outputs keyed by content. Deleting `.holbuild` alone
+  is therefore not a full rebuild: theories already in the shared cache are
+  "restored from cache". To really rebuild a theory, use `--force=project`
+  (or `holbuild clean <theory>Theory`); `holbuild gc` prunes stale cache
+  state.
 - To inspect theorems, types or goals non-interactively, pipe commands into
   the REPL:
   `printf 'load "fooTheory"; open fooTheory;\nprint_thm bar;\n' | holbuild repl`.
