@@ -1,4 +1,4 @@
-OTT ?= opam exec --switch=5.5.2+frama-c -- ott
+OTT ?= opam exec --switch=5.5.2+ott -- ott
 
 hol/tracesScript.sml: ott/traces.ott
 	cd hol && $(OTT) -i ../ott/traces.ott -o tracesScript.sml
