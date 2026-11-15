@@ -67,7 +67,7 @@ library) formalize the paper; the directories `hol/verif`, `hol/fol` and
 ## Building
 
 Dependencies: [HOL4](https://github.com/HOL-Theorem-Prover/HOL) at tag
-`trindemossen-2-v9` with Poly/ML 5.9.2, and [Ott](https://github.com/ott-lang/ott)
+`trindemossen-2-v10` with Poly/ML 5.9.2, and [Ott](https://github.com/ott-lang/ott)
 0.34 to regenerate `hol/tracesScript.sml` from `ott/traces.ott`.
 
 With `Holmake` from a HOL4 installation in your path, build all HOL4 files by

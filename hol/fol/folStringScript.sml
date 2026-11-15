@@ -32,7 +32,7 @@ End
 val sterm_size_def = fetch "-" "sterm_size_def";
 
 Theorem sterm_size_lemma[simp]:
-  !x l a. MEM a l ==> sterm_size a < 1 + (x + sterm1_size l)
+  !x l a. MEM a l ==> sterm_size a < 1 + (x + list_size sterm_size l)
 Proof
   rpt gen_tac >> Induct_on `l` >> rw[sterm_size_def] >> res_tac >> rw[]
 QED
@@ -41,10 +41,8 @@ Theorem sterm_induct:
   !P. (!v. P (SV v)) /\ (!f ts. (!t. MEM t ts ==> P t) ==> P (SFn f ts)) ==>
       !t. P t
 Proof
-  rpt strip_tac >>
-  qspecl_then [`P`, `\ts. !t. MEM t ts ==> P t`]
-    (assume_tac o SIMP_RULE bool_ss []) (TypeBase.induction_of ``:sterm``) >>
-  rfs[] >> fs[DISJ_IMP_THM, FORALL_AND_THM]
+  gen_tac >> strip_tac >>
+  ho_match_mp_tac (TypeBase.induction_of ``:sterm``) >> metis_tac[]
 QED
 
 Definition stermval_def:

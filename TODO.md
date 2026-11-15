@@ -185,7 +185,7 @@ thesis](https://doi.org/10.5281/zenodo.17093405) as closely as possible.
 
 - [ ] Set up a separate directory (e.g. `cakeml/`) with its own holbuild
       member, depending on the CakeML tag that matches the HOL4 tag in
-      `holbuild.toml` (`trindemossen-2-v9`), declared as for
+      `holbuild.toml` (`trindemossen-2-v10`), declared as for
       `folcompactness` (manifest in `shims/` if needed). Keep it out of the
       default build if it is too heavy.
 - [ ] An SMT-LIB printer for `sform`, defined in HOL. State what is trusted:
