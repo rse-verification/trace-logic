@@ -40,6 +40,17 @@ Definition ent_sound_def:
     !f1 f2. E f1 f2 ==> fsem relI f1 SUBSET fsem relI f2
 End
 
+(* semantic entailment, which is trivially a sound oracle *)
+Definition sem_ent_def:
+  sem_ent relI f1 f2 = (fsem relI f1 SUBSET fsem relI f2)
+End
+
+Theorem sem_ent_sound:
+  !relI. ent_sound relI (sem_ent relI)
+Proof
+  rw[ent_sound_def, sem_ent_def]
+QED
+
 Theorem G_dom_insert:
   !Y f G. G_dom ((Y,f) INSERT G) = Y INSERT G_dom G
 Proof

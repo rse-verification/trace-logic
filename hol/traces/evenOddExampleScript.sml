@@ -4,7 +4,7 @@
 Theory evenOddExample
 Ancestors
   pred_set list alist combin ott traces tracesSem tracesSos tracesSound
-  tracesStf
+  tracesStf tracesComplete
 
 (* ------------------------------------------------------------------------ *)
 (* The program of Example 2.2                                               *)
@@ -68,49 +68,11 @@ Proof
 QED
 
 (* ------------------------------------------------------------------------ *)
-(* The entailment oracle and the entailments used by rule (Cons)            *)
+(* The entailments used by rule (Cons) at calls                             *)
 (* ------------------------------------------------------------------------ *)
 
-(* semantic entailment, which is trivially a sound oracle *)
-Definition sem_ent_def:
-  sem_ent relI f1 f2 = (fsem relI f1 SUBSET fsem relI f2)
-End
-
-Theorem sem_ent_sound:
-  !relI. ent_sound relI (sem_ent relI)
-Proof
-  rw[ent_sound_def, sem_ent_def]
-QED
-
-Theorem chop_cons:
-  !A B t. t IN chop A B ==> ?s r. t = s::r
-Proof
-  rw[chop_def] >> Cases_on `l1` >> rw[]
-QED
-
-(* the two premises of rule (If) when the formula has the shape produced by
-   stf for conditionals: (b /\ Id ^ F1) \/ (~b /\ Id ^ F2) *)
-Theorem if_then_ent:
-  !relI b F1 F2.
-    sem_ent relI (f_chop Id_f F1)
-      (f_or (f_state (p_b (b_neg b)))
-            (f_or (f_and (f_state (p_b b)) (f_chop Id_f F1))
-                  (f_and (f_state (p_b (b_neg b))) (f_chop Id_f F2))))
-Proof
-  rw[sem_ent_def, fsem_eqs, SUBSET_DEF, p_sem_def, b_eval_def] >>
-  imp_res_tac chop_cons >> rw[] >> metis_tac[]
-QED
-
-Theorem if_else_ent:
-  !relI b F1 F2.
-    sem_ent relI (f_chop Id_f F2)
-      (f_or (f_state (p_b b))
-            (f_or (f_and (f_state (p_b b)) (f_chop Id_f F1))
-                  (f_and (f_state (p_b (b_neg b))) (f_chop Id_f F2))))
-Proof
-  rw[sem_ent_def, fsem_eqs, SUBSET_DEF, p_sem_def, b_eval_def] >>
-  imp_res_tac chop_cons >> rw[] >> metis_tac[]
-QED
+(* The oracle sem_ent is in tracesSound; the entailments for the premises
+   of rule (If), if_then_ent and if_else_ent, are in tracesComplete. *)
 
 (* The (Cons) step at odd() in Figure 6: stf(odd()) entails the formula
    for odd() that unfolding phi_even produces. Both denote Str[[odd()]]. *)

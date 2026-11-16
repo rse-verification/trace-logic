@@ -27,16 +27,16 @@ Every item is done only when:
 For Rec as currently formalized, before any Rec\* changes (item 1.2 only
 adds one case to the proof afterwards).
 
-- [ ] Move `sem_ent` (and `sem_ent_sound`) from `evenOddExample` to a core
+- [x] Move `sem_ent` (and `sem_ent_sound`) from `evenOddExample` to a core
       theory, e.g. `tracesSound` or a new `tracesComplete`.
-- [ ] Define the completeness assumption on the oracle, mirroring
+- [x] Define the completeness assumption on the oracle, mirroring
       `ent_sound`: `ent_complete relI E` if `E` answers yes for every
       semantically valid entailment (`sem_ent relI f1 f2 ==> E f1 f2`).
-- [ ] Define a well-formedness condition saying that every procedure called
+- [x] Define a well-formedness condition saying that every procedure called
       in the program (statement and table bodies) is declared. Without it
       Corollary 5.8 fails: an undeclared call has the empty trace set (`H`
       gives `{}`), so `m() : φ` is valid for every φ, but no rule derives it.
-- [ ] Generalize Theorem 5.7 to any set D of procedures: with
+- [x] Generalize Theorem 5.7 to any set D of procedures: with
       Γ_D = {Y_m : µX_m.stf({m}, S_m) | m ∈ D}, derive
       Γ_D ⊢ S[Γ_D] : stf(∅, S). Suggested proof: induction on the
       termination measure of `stf` (procedures not in D, then size of S); in
@@ -44,12 +44,12 @@ adds one case to the proof afterwards).
       `stf(X, S)` to the closed ones by (Cons) with semantic entailment, via
       `stf_unfold_Str` / `stf_unfold_mu`. Then (Unfold), with its closedness
       side condition, is not needed.
-- [ ] Theorem 5.7 as stated in the paper (D = all declared procedures).
-- [ ] Corollary 5.8: for a table without statement variables, a declared,
+- [x] Theorem 5.7 as stated in the paper (D = all declared procedures).
+- [x] Corollary 5.8: for a table without statement variables, a declared,
       variable-free S and closed φ, validity of `S : φ` implies derivability,
       using `stf_strongest` and (Cons). Also the version for the SOS
       (via `Str_eq_Ssos`), and soundness plus completeness as an equivalence.
-- [ ] Record the deviations (complete oracle, declared calls, generalized
+- [x] Record the deviations (complete oracle, declared calls, generalized
       Theorem 5.7) in `doc/note.tex`.
 
 ### 1.2. Rec\* in Ott (paper Section 6.1)

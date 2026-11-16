@@ -63,7 +63,8 @@ This note accompanies a HOL4 formalization of parts of the paper
 H\"ahnle~\cite{GH} (henceforth GH). The formalization covers the syntax and
 semantics of the programming language Rec, the trace logic, strongest trace
 formulas, and the proof calculus. Its main results are soundness of the
-calculus (\GH{Theorem~5.6}), the characterisation of strongest trace formulas
+calculus (\GH{Theorem~5.6}), its relative completeness (\GH{Theorem~5.7}
+and Corollary~5.8), the characterisation of strongest trace formulas
 (Theorem~4.9), the correctness of the trace semantics with respect to the
 SOS (Theorem~3.2), and the example derivation of Figure~6.
 
@@ -96,6 +97,11 @@ briefly. The noteworthy changes and additions are:
   proof of \GH{Theorem~4.9} does not use modal equation systems; it goes
   through a generalization to open formulas (Lemma~\ref{lem:stf-open}) and
   a single step of Beki\v{c}'s principle (Lemma~\ref{lem:bekic}).
+\item \emph{Relative completeness} (Section~\ref{sec:complete}). It needs
+  a complete oracle and programs whose calls are all declared.
+  \GH{Theorem~5.7} is generalized to antecedents for any set of procedures.
+  It has a short proof without (Unfold), and a proof along the paper's,
+  which needs a second induction and a case the paper omits.
 \item \emph{Figure~6 in full} (Section~\ref{sec:example}). The two (Cons)
   steps that the paper justifies informally follow from lemmas about
   unfolding strongest trace formulas (Lemma~\ref{lem:unfold}). A shorter
@@ -437,6 +443,109 @@ Finally, \GH{Corollary~5.5} holds as an equivalence.
   If $T$ and $S$ are variable-free, then $\models S : \phi$ if and only if
   $\fsem{\stf(S)} \subseteq \fsem{\phi}$.
 \end{corollary}
+
+\subsection{Relative completeness}\label{sec:complete}
+
+Completeness is relative to the oracle of (Cons), which must answer yes for
+every valid entailment: $\fsem{\phi'} \subseteq \fsem{\phi}$ implies
+$\phi' \models \phi$. Semantic entailment is both sound and complete in
+this sense. Completeness also needs an assumption on the program that the
+paper leaves implicit.
+
+\begin{definition}[Declared calls]\label{def:declared}
+  $S$ has \emph{declared calls} in $T$ if $T$ declares every procedure
+  called in $S$. $T$ has declared calls if all its bodies have.
+\end{definition}
+
+Without it, \GH{Corollary~5.8} fails: if $m$ is not declared, then
+$\Str_I\sem{\call{m}} = \emptyset$, so $\models \call{m} : \phi$ for every
+$\phi$, but no rule applies to $\call{m}$. Moreover, $\stf(\call{m}) =
+\Id\chop X_m$ is then not closed.
+
+\GH{Theorem~5.7} takes $\Gamma$ to contain $Y_m : \phi_m$ for all declared
+procedures, where $\phi_m = \mu X_m.\stf(\{m\}, S_m)$. Read literally,
+$S[\skipS;Y_{m_i}/m_i()]$ then contains no calls, and the case $S =
+\call{m}$ with $Y_m \notin \Gamma$ of the proof never arises. The proof does
+use smaller antecedents, and the formalization states the theorem for
+every set of procedures. For a set $D$ of declared procedures, let
+$\Gamma_D = \{Y_m : \phi_m \mid m \in D\}$.
+
+\begin{theorem}[\GH{Theorem~5.7}, generalized]\label{thm:canonical}
+  Let $T$ be variable-free with declared calls, the oracle complete, $D$ a
+  set of declared procedures, and $S$ variable-free with declared calls.
+  Then $\Gamma_D \vdash S[\skipS;Y_m/m()]_{m \in D} : \stf(S)$ is
+  derivable. In particular, this holds for $D$ the set of all declared
+  procedures, as in the paper, and $\vdash S : \stf(S)$ is derivable.
+\end{theorem}
+
+\begin{corollary}[\GH{Corollary~5.8}]\label{cor:complete}
+  Let $T$ be variable-free with declared calls, the oracle complete, and $S$
+  variable-free with declared calls. If $\models S : \phi$, or if
+  $\Ssos\sem{S} \subseteq \fsem{\phi}$, then $\vdash S : \phi$ is
+  derivable. With semantic entailment as the oracle, $\vdash S : \phi$ is
+  derivable if and only if $\models S : \phi$, if and only if $\Ssos\sem{S}
+  \subseteq \fsem{\phi}$.
+\end{corollary}
+
+The paper asks $\phi$ to be closed; the formalization does not need this,
+since free recursion variables denote $\emptyset$.
+
+The induction is, as in the paper, on the number of declared procedures
+outside $D$, then on $S$. In the case of (If), the paper combines (If) with
+an omitted rule (Or); the formalization uses (Cons) for each premise,
+from $\Id\chop\stf(S_i)$, which (Seq), (Skip) and the induction hypothesis
+give. A call of $m \in D$ becomes $\skipS;Y_m$ and follows by (Seq), (Skip)
+and (Ax). The remaining case, a call of $m \notin D$, is where the
+formalization has two proofs.
+
+\begin{itemize}
+\item \emph{Without (Unfold).} (Call) with contract $\phi_m$ leaves
+  $\Gamma_{D \cup \{m\}} \vdash S_m[\ldots] : \phi_m$. The induction
+  hypothesis gives $S_m[\ldots] : \stf(S_m)$, and one (Cons) step closes the
+  case, since $\fsem{\stf(S_m)} = \Str_I\sem{S_m} = \fsem{\phi_m}$ by
+  Theorem~\ref{thm:stf} and Lemma~\ref{lem:stf-open}.
+\item \emph{Along the paper's proof.} (Call) as before, then (Unfold),
+  whose side condition holds because $\phi_m$ is closed when $T$ has
+  declared calls. This leaves
+  \[
+    \Gamma_{D \cup \{m\}} \vdash S_m[\ldots] : \stf(\{m\}, S_m)[\phi_m/X_m].
+  \]
+  The paper continues ``by induction'', but
+  the induction hypothesis is about $\stf(\emptyset, \cdot)$, not about
+  $\stf(\{m\}, \cdot)[\phi_m/X_m]$. A second induction on the statement is
+  needed (Lemma~\ref{lem:walk}); the statement rules apply as for
+  $\stf(\emptyset, \cdot)$, since substitution commutes with the formula
+  constructors. At calls $\call{n}$ in $S_m$ there are three cases, of which
+  the paper discusses the third:
+  \begin{itemize}
+  \item $n = m$: the call becomes $\skipS;Y_m$, and the formula is
+    $\Id\chop\phi_m$; (Seq), (Skip) and (Ax) close it without (Cons).
+  \item $n \neq m$, $n \in D$: the call becomes $\skipS;Y_n$, but the
+    formula is
+    \[
+      \Id\chop(\mu X_n.\stf(\{n, m\}, S_n))[\phi_m/X_m],
+    \]
+    not $\Id\chop\phi_n$. (Cons) from the hypothesis $Y_n : \phi_n$ by
+    Lemma~\ref{lem:unfold}(b), then (Ax).
+  \item $n \notin D \cup \{m\}$: (Cons) from $\call{n} : \stf(\call{n})$ by
+    Lemma~\ref{lem:unfold}(b), and the outer induction hypothesis for
+    $D \cup \{m\}$.
+  \end{itemize}
+\end{itemize}
+
+\begin{lemma}\label{lem:walk}
+  Let $T$, the oracle and $D$ be as in Theorem~\ref{thm:canonical}, $m \in
+  D$, and suppose $\Gamma_D \vdash \call{n} : \stf(\call{n})$ is derivable
+  for every declared $n \notin D$. Then
+  \[
+    \Gamma_D \vdash S[\skipS;Y_{n}/n()]_{n \in D} : \stf(\{m\}, S)[\phi_m/X_m]
+  \]
+  is derivable for every variable-free $S$ with declared calls.
+\end{lemma}
+
+So the paper's argument works, with the generalization to $\Gamma_D$, the
+second induction, and the case $n \in D$ added. The first proof shows that
+(Unfold) is not needed for completeness.
 
 \section{The derivation of Figure~6}\label{sec:example}
 

@@ -37,7 +37,15 @@ directories `hol/verif`, `hol/fol` and `hol/vc` formalize the thesis.
 - `hol/traces/tracesSosScript.sml`: Theorem 3.2 (`Str_eq_Ssos`).
 - `hol/traces/tracesSoundScript.sml`: soundness (`calc_sound`, `calc_sound_empty`,
   `calc_sound_sos`) and a counterexample to soundness w.r.t. the paper's
-  Definition 5.4 (`original_validity_counterexample`).
+  Definition 5.4 (`original_validity_counterexample`), and the semantic
+  entailment oracle (`sem_ent`).
+- `hol/traces/tracesCompleteScript.sml`: relative completeness. Theorem 5.7,
+  generalized to antecedents Γ_D for any set D of procedures
+  (`stf_derivable_ctx`, and `stf_derivable_ctx_unfold` along the paper's
+  proof), as stated in the paper (`stf_derivable_all`) and with empty
+  antecedent (`stf_derivable`); Corollary 5.8 (`calc_complete`,
+  `calc_complete_sos`); and soundness plus completeness as an equivalence
+  (`calc_sound_complete`, `calc_sound_complete_sos`).
 - `hol/traces/tracesStfScript.sml`: strongest trace formulas (Definition 4.6,
   `stf`), Theorem 4.9 (`stf_Str`, and `stf_Ssos` for the SOS), Corollary 5.5
   (`stf_strongest`), lemmas about unfolding strongest trace formulas, and
@@ -131,7 +139,11 @@ theorems. Theory `traces` is generated from the Ott file.
 | Corollary 5.5 | `calc_sound_empty`, `calc_sound_sos` | `tracesSound` |
 | Lemma 5.6 (fixed-point induction) | `call_fixpoint_induction`, `call_sound` | `tracesSound` |
 | Corollary 5.7 (paper Cor 5.5) | `stf_strongest` | `tracesStf` |
-| Theorem 6.1 (paper Ex 5.2, Fig 6) | `even_stf_derivable`, `even_stf_valid`, `even_stf_valid_sos`; (Cons) steps `if_then_ent`, `if_else_ent`, `odd_call_ent`, `even_var_ent` | `evenOddExample` |
+| Definition 5.8 (declared calls) | `calls_declared`, `tbl_declared`; complete oracle `ent_complete`, `sem_ent_complete` | `tracesComplete` |
+| Theorem 5.9 (paper Thm 5.7) | `stf_ctx` (Γ_D), `stf_derivable_ctx`, `stf_derivable_ctx_unfold`, `stf_derivable_all`, `stf_derivable` | `tracesComplete` |
+| Corollary 5.10 (paper Cor 5.8) | `calc_complete`, `calc_complete_sos`, `calc_sound_complete`, `calc_sound_complete_sos` | `tracesComplete` |
+| Lemma 5.11 | `stf_walk` (closedness for (Unfold): `stf_mu_closed`) | `tracesComplete` |
+| Theorem 6.1 (paper Ex 5.2, Fig 6) | `even_stf_derivable`, `even_stf_valid`, `even_stf_valid_sos`; (Cons) steps `if_then_ent`, `if_else_ent` (in `tracesComplete`), `odd_call_ent`, `even_var_ent` | `evenOddExample` |
 | Remark 6.2 | `even_stf_derivable_short` | `evenOddExample` |
 | Figure 2 (SOS) | `c_red`, `sos_tr`, `Ssos` | `traces`, `tracesSos` |
 
@@ -194,6 +206,24 @@ theorems. Theory `traces` is generated from the Ott file.
   denotes the traces of S. The case of a call is one step of Bekič's
   principle (`rho0_bekic`). Corollary 5.5 is proved as an equivalence:
   `S : φ` is valid iff `stf(S)` entails φ.
+- **Relative completeness (Theorem 5.7, Corollary 5.8).** The oracle must
+  be complete (`ent_complete`: it answers yes for every valid entailment),
+  and every procedure called in the statement and in the table must be
+  declared (`calls_declared`, `tbl_declared`). Without the latter,
+  Corollary 5.8 fails: an undeclared call has no traces, so `m() : φ` is
+  valid for every φ, but no rule derives it. Theorem 5.7 is generalized to
+  `Γ_D = {Y_m : φ_m | m ∈ D}` for any set D of declared procedures; the
+  paper's statement (D = all declared procedures) is the instance
+  `stf_derivable_all`, and D = ∅ gives `⊢ S : stf(S)`. Corollary 5.8 does
+  not need φ to be closed. There are two proofs. `stf_derivable_ctx` closes
+  the call case with one (Cons) step from `stf(S_m)` to `φ_m`, without
+  (Unfold). `stf_derivable_ctx_unfold` follows Appendix A.4: (Call), then
+  (Unfold), then a second induction along the body (`stf_walk`), since the
+  outer induction hypothesis is about `stf(S)`, not about
+  `stf({m}, S)[φ_m/X_m]`. At calls of `n ∈ D` with `n ≠ m`, a case the
+  paper does not mention, it needs (Cons) from `Y_n : φ_n` by
+  `stf_unfold_mu`. The paper's rule (Or) in the (If) case is replaced by
+  (Cons) (`if_then_ent`, `if_else_ent`).
 - **Examples 4.7 and 4.8.** With the naming above, the formulas are those of
   the paper, with chop associated to the right, as Definition 4.6 builds it.
   In Example 4.8, `x > 0` is written `¬(x ≤ 0)`, since Boolean expressions
