@@ -1,7 +1,7 @@
 OTT ?= opam exec --switch=5.5.2+ott -- ott
 
-hol/tracesScript.sml: ott/traces.ott
-	cd hol && $(OTT) -i ../ott/traces.ott -o tracesScript.sml
+hol/traces/tracesScript.sml: ott/traces.ott
+	cd hol/traces && $(OTT) -i ../../ott/traces.ott -o tracesScript.sml
 
 ott/traces.pdf: ott/traces.ott
 	cd ott && $(OTT) -i traces.ott -o traces.tex && pdflatex -interaction=nonstopmode traces.tex
@@ -18,7 +18,7 @@ doc/verif.pdf: doc/verif.tex
 doc/fol.pdf: doc/fol.tex
 	cd doc && pdflatex -interaction=nonstopmode fol.tex && pdflatex -interaction=nonstopmode fol.tex
 
-build: hol/tracesScript.sml
+build: hol/traces/tracesScript.sml
 	holbuild build
 
 .PHONY: build

@@ -2,8 +2,10 @@
 
 This repository formalizes a paper, and a thesis building on it, in HOL4.
 For the paper, the syntax, operational semantics and proof rules are written
-in Ott and exported to HOL4. The formalization of the thesis (`hol/verif`,
-`hol/fol`, `hol/vc`) is written directly in HOL4. See `README.md` for the
+in Ott and exported to HOL4 (`hol/traces`). The formalization of the thesis
+(`hol/verif`, `hol/fol`, `hol/vc`) is written directly in HOL4. General
+theories and libraries unrelated to the domain, such as the Ott support
+library, go in `hol/misc`. Every HOL4 file is in a subdirectory of `hol`. See `README.md` for the
 layout, the main theorems, and the deviations from the paper and the thesis.
 Most of the notes below apply to any Ott + HOL4 formalization.
 
@@ -14,8 +16,9 @@ Most of the notes below apply to any Ott + HOL4 formalization.
   `INCLUDES`.
 - A new HOL directory (e.g. `hol/verif`) must be added in two places: to
   `INCLUDES` in the root `Holmakefile` for Holmake, and to `members` in
-  `holbuild.toml` for holbuild. It also needs its own `Holmakefile` with
-  `INCLUDES = ..` to see the theories in `hol`.
+  `holbuild.toml` for holbuild. It also needs its own `Holmakefile` whose
+  `INCLUDES` lists the sibling directories it uses, e.g.
+  `INCLUDES = ../misc ../traces`.
 - Theories from HOL's `examples` (e.g. `examples/logic/folcompactness`) are
   not in HOL's sigobj. For Holmake, add `$(HOLDIR)/examples/...` to
   `INCLUDES` of each directory that uses them; Holmake then builds them
@@ -28,12 +31,12 @@ Most of the notes below apply to any Ott + HOL4 formalization.
   SHA of the annotated tag object.
 - if Ott is installed in the opam switch `my-switch`, then outside that switch,
   call it as `opam exec --switch=my-switch -- ott`, as the `Makefile` does.
-- `make hol/tracesScript.sml` regenerates the HOL script from `ott/traces.ott`.
+- `make hol/traces/tracesScript.sml` regenerates the HOL script from `ott/traces.ott`.
   `make ott/traces.pdf` typesets the Ott file. The generated script is
   committed; never edit it by hand.
 - Hand-written theory scripts start with a `Theory` / `Ancestors` header
   and have no `new_theory` or `export_theory` call. Two scripts keep the old
-  style: the generated `hol/tracesScript.sml`, and `hol/ottScript.sml`,
+  style: the generated `hol/traces/tracesScript.sml`, and `hol/misc/ottScript.sml`,
   which is kept as in Ott repository upstream as far as possible.
 - Before finishing, do a clean build: `Holmake cleanAll && Holmake`. Then check
   that no main theorem depends on a cheat or oracle: `grep -rn cheat hol`,
@@ -112,8 +115,8 @@ Most of the notes below apply to any Ott + HOL4 formalization.
   generated substitution is not capture-avoiding; it only stops at a binder
   for the same variable (`bind X in f`).
 - Run ott from the directory of the generated script
-  (`cd hol && ott -i ../ott/traces.ott -o tracesScript.sml`). Otherwise
-  `new_theory` gets the output path, e.g. `"../hol/traces"`.
+  (`cd hol/traces && ott -i ../../ott/traces.ott -o tracesScript.sml`).
+  Otherwise `new_theory` gets the output path, e.g. `"../hol/traces/traces"`.
 - Theories needed by homs must be opened in an `embed {{ hol ... }}` block
   before use, e.g. `alistTheory` for `ALOOKUP`. Embeds appear in the output
   after the datatypes, in file order, so definitions in embeds can use the

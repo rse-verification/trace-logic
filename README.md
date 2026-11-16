@@ -21,28 +21,28 @@ and the first-order encoding with end-to-end soundness (see
 
 ## File layout
 
-The Ott file and the theories directly in `hol/` (apart from the Ott support
-library) formalize the paper; the directories `hol/verif`, `hol/fol` and
-`hol/vc` formalize the thesis.
+The Ott file and the theories in `hol/traces` formalize the paper; the
+directories `hol/verif`, `hol/fol` and `hol/vc` formalize the thesis.
+`hol/misc` holds general theories and libraries unrelated to the domain.
 
 - `ott/traces.ott`: syntax of Rec and of trace formulas, the SOS (Figure 1),
   SOS-induced traces (Definition 2.6), and the proof calculus (Figure 5 plus
   explicit structural rules). This file is the source of truth for these
   definitions.
-- `hol/tracesScript.sml`: generated from the Ott file (`make hol/tracesScript.sml`).
+- `hol/traces/tracesScript.sml`: generated from the Ott file (`make hol/traces/tracesScript.sml`).
   Do not edit it by hand.
-- `hol/tracesSemScript.sml`: trace set operators, the denotational semantics
+- `hol/traces/tracesSemScript.sml`: trace set operators, the denotational semantics
   of statements (Definition 3.1) and of formulas (Definition 4.2), the
   substitution lemma and fixed-point unfolding (Proposition 4.3).
-- `hol/tracesSosScript.sml`: Theorem 3.2 (`Str_eq_Ssos`).
-- `hol/tracesSoundScript.sml`: soundness (`calc_sound`, `calc_sound_empty`,
+- `hol/traces/tracesSosScript.sml`: Theorem 3.2 (`Str_eq_Ssos`).
+- `hol/traces/tracesSoundScript.sml`: soundness (`calc_sound`, `calc_sound_empty`,
   `calc_sound_sos`) and a counterexample to soundness w.r.t. the paper's
   Definition 5.4 (`original_validity_counterexample`).
-- `hol/tracesStfScript.sml`: strongest trace formulas (Definition 4.6,
+- `hol/traces/tracesStfScript.sml`: strongest trace formulas (Definition 4.6,
   `stf`), Theorem 4.9 (`stf_Str`, and `stf_Ssos` for the SOS), Corollary 5.5
   (`stf_strongest`), lemmas about unfolding strongest trace formulas, and
   Example 4.8 (`example_4_8`, by evaluation).
-- `hol/evenOddExampleScript.sml`: Example 4.7 (`example_4_7`, by
+- `hol/traces/evenOddExampleScript.sml`: Example 4.7 (`example_4_7`, by
   evaluation) and Example 5.2 / Figure 6. It derives
   `⊢ even() : stf(even())` for the program of Example 2.2 in the calculus as
   in Figure 6 (`even_stf_derivable`), and by a shorter derivation without
@@ -53,7 +53,7 @@ library) formalize the paper; the directories `hol/verif`, `hol/fol` and
   paper, how the formalization differs from it. The table under
   [Note to HOL4](#note-to-hol4) maps its numbered items to HOL4 names.
 - `hol/verif/`: formalization of the soundness results of Chapter 4 of
-  the thesis, on top of the theories above. See
+  the thesis, on top of the theories in `hol/traces`. See
   [Finite-trace calculus](#finite-trace-calculus).
 - `hol/fol/`: first-order logic with string names, proved equivalent to the
   deep embedding of HOL4's `examples/logic/folcompactness`, and the
@@ -62,13 +62,13 @@ library) formalize the paper; the directories `hol/verif`, `hol/fol` and
   (thesis Section 4.4), the encodings as first-order formulas, and end-to-end
   soundness of the resulting verification conditions. See
   [First-order encoding](#first-order-encoding).
-- `hol/ott*.sml`: Ott support library for HOL4.
+- `hol/misc/ott*.sml`: Ott support library for HOL4.
 
 ## Building
 
 Dependencies: [HOL4](https://github.com/HOL-Theorem-Prover/HOL) at tag
 `trindemossen-2-v10` with Poly/ML 5.9.2, and [Ott](https://github.com/ott-lang/ott)
-0.34 to regenerate `hol/tracesScript.sml` from `ott/traces.ott`.
+0.34 to regenerate `hol/traces/tracesScript.sml` from `ott/traces.ott`.
 
 With `Holmake` from a HOL4 installation in your path, build all HOL4 files by
 running this at the repository root:
@@ -77,7 +77,7 @@ running this at the repository root:
 Holmake
 ```
 
-Holmake regenerates `hol/tracesScript.sml` when `ott/traces.ott` is newer.
+Holmake regenerates `hol/traces/tracesScript.sml` when `ott/traces.ott` is newer.
 This needs `ott` in your path. The theories in `hol/fol` and `hol/vc` use
 `examples/logic/folcompactness` of the HOL4 distribution, which Holmake
 builds inside the HOL4 installation.
@@ -88,7 +88,7 @@ It fetches and builds the HOL4 commit pinned in `holbuild.toml`, with
 not run Ott:
 
 ```
-make hol/tracesScript.sml   # after changing ott/traces.ott
+make hol/traces/tracesScript.sml   # after changing ott/traces.ott
 holbuild build
 ```
 

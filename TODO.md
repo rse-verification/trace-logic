@@ -71,7 +71,7 @@ clause `Id⌢stf(S1) ∨ Id⌢stf(S2)` and the rule (If-∗).
       (`Id | Sb | X | p ∧ φ | φ ∨ ψ | φ⌢ψ | µX.φ`), e.g. as an Ott subrule
       of `f`. Note that it also excludes the `Q` relations (`relI`), which
       the paper does not have.
-- [ ] Regenerate `hol/tracesScript.sml` and repair the existing theories
+- [ ] Regenerate `hol/traces/tracesScript.sml` and repair the existing theories
       (adding the new cases, or `is_rec` hypotheses where item 2.1 is
       postponed).
 

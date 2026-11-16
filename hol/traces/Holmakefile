@@ -1,0 +1,8 @@
+INCLUDES = ../misc
+OTT = ott
+
+all: $(DEFAULT_TARGETS)
+.PHONY: all
+
+tracesScript.sml: ../../ott/traces.ott
+	$(OTT) -i ../../ott/traces.ott -o tracesScript.sml

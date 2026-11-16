@@ -1,4 +1,4 @@
-INCLUDES = .. $(HOLDIR)/examples/logic/folcompactness
+INCLUDES = ../misc ../traces $(HOLDIR)/examples/logic/folcompactness
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

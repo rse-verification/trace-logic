@@ -1,4 +1,4 @@
-INCLUDES = ..
+INCLUDES = ../misc ../traces
 
 all: $(DEFAULT_TARGETS)
 .PHONY: all

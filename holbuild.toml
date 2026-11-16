@@ -18,6 +18,6 @@ path = "examples/logic/folcompactness"
 manifest = "shims/hol_folcompactness.toml"
 
 [build]
-members = ["hol", "hol/verif", "hol/fol", "hol/vc"]
+members = ["hol/misc", "hol/traces", "hol/verif", "hol/fol", "hol/vc"]
 # about 10x the slowest proof step (15.6 s in vcEval, November 2026)
 tactic_timeout = 150.0
