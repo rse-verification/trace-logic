@@ -142,6 +142,30 @@ One item for now; split it into finer items when starting on it.
   traces). Infinite traces and greatest fixed points change the semantic
   domain and are probably out of scope.
 
+### 1.7. Non-vacuity of the main theorems
+
+A main theorem whose hypotheses cannot hold together is true but says
+nothing, and the kernel does not notice. Instantiate each main theorem of
+the paper formalization on a concrete program, so that its hypotheses are
+shown to be satisfiable. This can be done at any time, and again after
+items that add hypotheses (e.g. `is_rec` in item 1.2).
+
+- [ ] List the main theorems with hypotheses: at least `Str_eq_Ssos`,
+      `calc_sound`, `calc_sound_empty`, `calc_sound_sos`, `stf_Str`,
+      `stf_Ssos`, `stf_strongest`, `stf_derivable_ctx`,
+      `stf_derivable_ctx_unfold`, `stf_derivable`, `calc_complete`,
+      `calc_complete_sos`, `calc_sound_complete`.
+- [ ] For each, discharge its hypotheses on `evenodd_tbl` or `down_tbl`
+      (`tbl_var_free`, `tbl_declared`, `var_free`, `calls_declared`, the
+      oracle conditions with `sem_ent`). In particular, derive
+      `even_stf_derivable` as an instance of `stf_derivable`, and
+      `even() : stf(even())` as an instance of `calc_sound_complete`.
+- [ ] Where a hypothesis is a parameter (e.g. `D` in `stf_derivable_ctx`),
+      also use a non-trivial instance (`D = {"even"}`).
+- [ ] Put the instances in the example theories (`evenOddExample`,
+      `tracesStf` for `down_tbl`) or in a new `tracesSanity` theory, and
+      mention them in the README.
+
 ## 2. Thesis formalization extensions
 
 ### 2.1. Thesis encodings for Rec\*

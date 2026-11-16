@@ -41,6 +41,10 @@ Most of the notes below apply to any Ott + HOL4 formalization.
 - Before finishing, do a clean build: `Holmake cleanAll && Holmake`. Then check
   that no main theorem depends on a cheat or oracle: `grep -rn cheat hol`,
   and `Tag.dest_tag (Thm.tag th)` should list no oracles besides `DISK_THM`.
+  For example, from the theory's directory, with the theorems to check in
+  the list:
+  `printf 'load "tracesCompleteTheory"; open tracesCompleteTheory;\nval _ = app (fn th => print (String.concatWith "," (fst (Tag.dest_tag (Thm.tag th))) ^ "\\n")) [calc_complete, stf_derivable];\n' | (ulimit -v 4000000; timeout 300 hol)`
+  prints one line per theorem, which should read `DISK_THM`.
 
 ## Using holbuild effectively when developing proofs
 
@@ -185,3 +189,14 @@ Most of the notes below apply to any Ott + HOL4 formalization.
   lemma (`sb_name p = SOME x <=> p = "Sb_" ++ x`), and case split on it.
 - Do not rewrite with `GSYM LIST_TO_SET_EQ_EMPTY` in `fs`: it loops. To show
   `l = []` from facts about `set l`, use `Cases_on `l`` and `EXTENSION`.
+- `irule` may reorder the premises of a rule. For a rule with a variable
+  that occurs only in its premises, such as (Cons) `calc_cons` or (Unfold),
+  `irule` put the oracle premise `E f' f` before the derivation premise, and
+  a `qexists_tac ... >> conj_tac >- ...` chain then worked on the wrong
+  goal. Use `match_mp_tac`, which keeps the premise order of the rule.
+- Before `Induct` on a variable, move every assumption that mentions it
+  into the goal by pattern, e.g. `qpat_x_assum `var_free S0` mp_tac >>
+  qpat_x_assum `calls_declared _ S0` mp_tac >> qid_spec_tac `S0``, rather
+  than by counting with `ntac n (pop_assum mp_tac)`. Counting missed an
+  assumption once after other facts were added, so the induction
+  hypotheses lacked it.
