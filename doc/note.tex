@@ -81,7 +81,10 @@ briefly. The noteworthy changes and additions are:
   procedures in the domain of the antecedent by their hypotheses
   (Definition~\ref{def:valid}). It agrees with the paper's for empty
   antecedents, and soundness holds for all sequents
-  (Section~\ref{sec:validity}).
+  (Section~\ref{sec:validity}). Since the statement variable of a
+  procedure is its name, (Call) needs no conditions that the variable is
+  fresh and that the antecedent assigns each procedure one variable
+  (Proposition~\ref{prop:call-nu}).
 \item \emph{Semantics relative to a set of procedures}
   (Definition~\ref{def:str}). It makes precise what the (Call) rule assumes,
   and is used both for validity and for strongest trace formulas.
@@ -436,6 +439,45 @@ and in $\rho^{D \cup \{m\}}_{I'}$ the substitution $S_m[\skipS;Y_{m'}/m'()]$
 does not change the semantics of $S_m$. So the hypothesis of
 Lemma~\ref{lem:call} holds, and $\Str^D_I\sem{\call{m}} = \rho^D_I(m)
 \subseteq \dup\fsem{\phi} = \fsem{\Id\chop\phi}$.
+
+Identifying $Y_m$ with $m$ also spares (Call) two side conditions that it
+needs when each procedure gets a statement variable of its own. Let $\nu$
+map procedure names to statement variables, with $Y_m = \nu(m)$. Let
+antecedents contain judgments $n : \psi$ about procedure names $n$, with
+$\dom(\Gamma)$ the set of such $n$. Define $H^{D,\nu}_I$, $\rho^{D,\nu}_I$
+and $\Str^{D,\nu}_I$ as in Definition~\ref{def:str}, with $I(\nu(m))$ in
+place of $I(Y_m)$. Let $\Gamma \models_\nu S : \phi$ if for every $I$ such
+that $I(\nu(n)) \subseteq \fsem{\psi}$ for all $n : \psi \in \Gamma$, we
+have $\Str^{\dom(\Gamma),\nu}_I\sem{S} \subseteq \fsem{\phi}$. For the
+identity $\nu$, these are Definitions~\ref{def:str} and~\ref{def:valid}.
+
+\begin{proposition}[(Call) with separate statement variables]
+  \label{prop:call-nu}
+  Let $T$ be variable-free, $m\,\{S_m\} \in T$ and $m \notin \dom(\Gamma)$.
+  \begin{enumerate}
+  \item If $\nu(n) \neq \nu(m)$ for all $n \in \dom(\Gamma)$, and
+    $\Gamma, m : \phi \models_\nu S_m[\skipS;\nu(m')/\call{m'}]_{m' \in
+      \dom(\Gamma, m : \phi)} : \phi$, then $\Gamma \models_\nu \call{m} :
+    \Id\chop\phi$.
+  \item For the identity $\nu$, the condition $\nu(n) \neq \nu(m)$ for
+    all $n \in \dom(\Gamma)$ is $m \notin \dom(\Gamma)$, and (1) is the
+    (Call) case of Theorem~\ref{thm:sound}.
+  \item The freshness condition of (1) cannot be dropped. Let
+    $T = \{m\,\{\call{n}\}\}$, $\Gamma = \{n : \mathit{true}\}$ and
+    $\nu(m) = \nu(n) = Y$. Then $\Gamma, m : \mathit{false} \models_\nu
+    \skipS; Y : \mathit{false}$, since the antecedent forces $I(Y) =
+    \emptyset$. But $\Gamma \models_\nu \call{m} :
+    \Id\chop\mathit{false}$ fails for $I(Y) = \Str_I\sem{\skipS}$.
+  \end{enumerate}
+\end{proposition}
+
+Freshness is needed already in the version of Lemma~\ref{lem:call} for
+$\nu$, with $I' = I[\nu(m) \mapsto \gamma]$: the update must leave the
+interpretation of the other procedures in $D$ unchanged. The second side condition is implicit in $\nu$: since $\nu$ is a
+function, each procedure has a single variable. An encoding that records a
+variable in each entry of the antecedent, as triples $(n, Y, \psi)$, must
+require in addition that the antecedent assigns each name a single
+variable, e.g., that its names are distinct.
 
 Finally, \GH{Corollary~5.5} holds as an equivalence.
 

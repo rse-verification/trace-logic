@@ -39,6 +39,11 @@ directories `hol/verif`, `hol/fol` and `hol/vc` formalize the thesis.
   `calc_sound_sos`) and a counterexample to soundness w.r.t. the paper's
   Definition 5.4 (`original_validity_counterexample`), and the semantic
   entailment oracle (`sem_ent`).
+- `hol/traces/tracesCallVarsScript.sml`: validity and the (Call) rule with
+  a separate statement variable `Y_m` for each procedure `m`, given by a
+  map `nu` (`valid_nu`, `call_sound_nu`). With `nu = I` this is `valid`,
+  and `call_sound` follows (`call_sound_from_nu`); the freshness condition
+  on `Y_m` cannot be dropped (`call_nu_freshness_necessary`).
 - `hol/traces/tracesCompleteScript.sml`: relative completeness. Theorem 5.7,
   generalized to antecedents Γ_D for any set D of procedures
   (`stf_derivable_ctx`, and `stf_derivable_ctx_unfold` along the paper's
@@ -138,11 +143,12 @@ theorems. Theory `traces` is generated from the Ott file.
 | Theorem 5.4 (paper Thm 5.6) | `calc_sound` | `tracesSound` |
 | Corollary 5.5 | `calc_sound_empty`, `calc_sound_sos` | `tracesSound` |
 | Lemma 5.6 (fixed-point induction) | `call_fixpoint_induction`, `call_sound` | `tracesSound` |
-| Corollary 5.7 (paper Cor 5.5) | `stf_strongest` | `tracesStf` |
-| Definition 5.8 (declared calls) | `calls_declared`, `tbl_declared`; complete oracle `ent_complete`, `sem_ent_complete` | `tracesComplete` |
-| Theorem 5.9 (paper Thm 5.7) | `stf_ctx` (Γ_D), `stf_derivable_ctx`, `stf_derivable_ctx_unfold`, `stf_derivable_all`, `stf_derivable` | `tracesComplete` |
-| Corollary 5.10 (paper Cor 5.8) | `calc_complete`, `calc_complete_sos`, `calc_sound_complete`, `calc_sound_complete_sos` | `tracesComplete` |
-| Lemma 5.11 | `stf_walk` (closedness for (Unfold): `stf_mu_closed`) | `tracesComplete` |
+| Proposition 5.7 (separate statement variables) | `valid_nu`, `ovr_nu`, `subst_calls_nu`, `call_fixpoint_induction_nu`; (1) `call_sound_nu`, (2) `valid_nu_I`, `fresh_I`, `call_sound_from_nu`, (3) `call_nu_freshness_necessary` | `tracesCallVars` |
+| Corollary 5.8 (paper Cor 5.5) | `stf_strongest` | `tracesStf` |
+| Definition 5.9 (declared calls) | `calls_declared`, `tbl_declared`; complete oracle `ent_complete`, `sem_ent_complete` | `tracesComplete` |
+| Theorem 5.10 (paper Thm 5.7) | `stf_ctx` (Γ_D), `stf_derivable_ctx`, `stf_derivable_ctx_unfold`, `stf_derivable_all`, `stf_derivable` | `tracesComplete` |
+| Corollary 5.11 (paper Cor 5.8) | `calc_complete`, `calc_complete_sos`, `calc_sound_complete`, `calc_sound_complete_sos` | `tracesComplete` |
+| Lemma 5.12 | `stf_walk` (closedness for (Unfold): `stf_mu_closed`) | `tracesComplete` |
 | Theorem 6.1 (paper Ex 5.2, Fig 6) | `even_stf_derivable`, `even_stf_valid`, `even_stf_valid_sos`; (Cons) steps `if_then_ent`, `if_else_ent` (in `tracesComplete`), `odd_call_ent`, `even_var_ent` | `evenOddExample` |
 | Remark 6.2 | `even_stf_derivable_short` | `evenOddExample` |
 | Figure 2 (SOS) | `c_red`, `sos_tr`, `Ssos` | `traces`, `tracesSos` |
@@ -164,7 +170,16 @@ theorems. Theory `traces` is generated from the Ott file.
   the paper's single-procedure argument plus Bekič's principle.
 - **Antecedents.** Γ contains only judgments `Y : φ` about statement variables.
   `Y_m` is identified with the name `m`. The (Call) side condition is
-  `Y_m ∉ dom Γ` rather than `Y_m : φ_m ∉ Γ`.
+  `Y_m ∉ dom Γ` rather than `Y_m : φ_m ∉ Γ`. The identification spares
+  (Call) two side conditions it needs when each procedure has its own
+  variable `Y_m = ν(m)`, as in an encoding that records `Y_m` in each
+  antecedent entry: `Y_m` must be fresh for the antecedent, and the
+  antecedent must give each procedure a single variable. In
+  `tracesCallVars`, `call_sound_nu` proves (Call) sound for any map `nu`
+  under the freshness condition, which for `nu = I` is `m ∉ dom Γ`
+  (`call_sound_from_nu`), and `call_nu_freshness_necessary` shows that it
+  cannot be dropped. Since `nu` is a function, each procedure there has a
+  single variable by construction.
 - **Structural rules.** The paper omits them. The calculus has (Ax), (Weak),
   (Cut), (∧R), (∧L) and (ConsL). Weakening and cut must preserve `dom Γ`,
   because the corrected semantics depends on `dom Γ`. ∨L is unsound for trace
